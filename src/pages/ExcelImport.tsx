@@ -5,6 +5,7 @@ import { ClayCard, ClayButton, ClayTab } from '@/components';
 import { useTransactionStore, useCategoryStore, useMerchantRuleStore } from '@/store/useStore';
 import { getIcon } from '@/utils/icons';
 import { suggestCategory } from '@/utils/aiService';
+import { billCategoryMapping, normalizeMerchant } from '@/utils/category';
 import type { Category } from '@/types';
 import { ArrowLeft, Upload, CheckCircle, Sparkles, Wand2, Bot, Loader2 } from 'lucide-react';
 
@@ -186,6 +187,7 @@ export const ExcelImport = () => {
   const getMainCategories = useCategoryStore((state) => state.getMainCategories);
   const getSubCategories = useCategoryStore((state) => state.getSubCategories);
   const matchMerchant = useMerchantRuleStore((state) => state.matchMerchant);
+  const incrementUseCount = useMerchantRuleStore((state) => state.incrementUseCount);
   
   const [step, setStep] = useState(1);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -290,7 +292,7 @@ export const ExcelImport = () => {
     
     const mappedRows: ImportRow[] = rowsToProcess.map((row) => {
       const date = String(row[headers.find(h => fieldMapping[h] === 'date') || ''] || '');
-      const amount = String(row[headers.find(h => fieldMapping[h] === 'amount') || ''] || '');
+      const amount = row[headers.find(h => fieldMapping[h] === 'amount') || ''] || '';
       const merchant = String(row[headers.find(h => fieldMapping[h] === 'merchant') || ''] || '');
       const type = String(row[headers.find(h => fieldMapping[h] === 'type') || ''] || '');
       const note = String(row[headers.find(h => fieldMapping[h] === 'note') || ''] || '');
@@ -303,16 +305,24 @@ export const ExcelImport = () => {
 
       let categoryL1 = '';
       let categoryL2 = '';
-      
-      const smartMatch = smartMatchCategory(textToMatch, transactionType);
-      if (smartMatch) {
-        categoryL1 = smartMatch.l1;
-        categoryL2 = smartMatch.l2;
+
+      const billCategory = String(row['category'] || row['交易分类'] || row['类型'] || '').trim();
+      const mappedFromBill = billCategoryMapping[billCategory];
+      if (mappedFromBill) {
+        categoryL1 = mappedFromBill.categoryL1;
+        categoryL2 = mappedFromBill.categoryL2;
       } else {
-        const matched = matchMerchant(merchant);
-        if (matched) {
-          categoryL1 = matched.categoryL1;
-          categoryL2 = matched.categoryL2;
+        const smartMatch = smartMatchCategory(textToMatch, transactionType);
+        if (smartMatch) {
+          categoryL1 = smartMatch.l1;
+          categoryL2 = smartMatch.l2;
+        } else {
+          const normalizedMerchant = normalizeMerchant(merchant);
+          const matched = matchMerchant(normalizedMerchant);
+          if (matched) {
+            categoryL1 = matched.categoryL1;
+            categoryL2 = matched.categoryL2;
+          }
         }
       }
 
@@ -321,11 +331,13 @@ export const ExcelImport = () => {
         categoryL2 = transactionType === 'income' ? 'other-income-unknown' : 'other-expense-gift';
       }
 
+      const normalizedMerchant = normalizeMerchant(merchant);
+
       return {
         original: row,
         date: formatDate(String(date)),
-        amount: formatAmount(String(amount)),
-        merchant,
+        amount: formatAmount(amount),
+        merchant: normalizedMerchant,
         type: transactionType,
         note,
         categoryL1,
@@ -350,10 +362,17 @@ export const ExcelImport = () => {
     return new Date().toISOString().split('T')[0];
   };
 
-  const formatAmount = (amountStr: string): string => {
-    if (!amountStr) return '0';
-    const match = amountStr.match(/[\d.]+/);
-    return match ? match[0] : '0';
+  const formatAmount = (amountVal: string | number): string => {
+    if (amountVal === null || amountVal === undefined || amountVal === '') return '0';
+    
+    if (typeof amountVal === 'number') {
+      if (isNaN(amountVal) || !isFinite(amountVal)) return '0';
+      return Math.abs(amountVal).toString();
+    }
+    
+    const cleaned = amountVal.replace(/[,\s¥￥$]/g, '');
+    const match = cleaned.match(/-?\d+(\.\d+)?/);
+    return match ? Math.abs(parseFloat(match[0])).toString() : '0';
   };
 
   const handleCategoryChange = (rowIndex: number, level: 'L1' | 'L2', value: string) => {
@@ -411,9 +430,10 @@ export const ExcelImport = () => {
   const handleImport = () => {
     let success = 0;
     let failed = 0;
+    const newlyMatchedRuleIds = new Set<string>();
 
     importRows.forEach((row) => {
-      if (!row.date || !row.amount || !row.categoryL1 || !row.categoryL2) {
+      if (!row.date || row.amount === '' || !row.categoryL1 || !row.categoryL2) {
         failed++;
         return;
       }
@@ -429,11 +449,19 @@ export const ExcelImport = () => {
           note: row.note,
           source: 'excel',
         });
+
+        const matched = matchMerchant(row.merchant);
+        if (matched && (matched as any).ruleId) {
+          newlyMatchedRuleIds.add((matched as any).ruleId);
+        }
+
         success++;
       } catch {
         failed++;
       }
     });
+
+    newlyMatchedRuleIds.forEach(id => incrementUseCount(id));
 
     setImportResult({ success, failed });
     setStep(4);

@@ -65,13 +65,157 @@ export const defaultCategories: Category[] = [
 ];
 
 export const defaultMerchantRules: MerchantRule[] = [
-  { id: '1', merchantName: '美团', categoryL1: 'food', categoryL2: 'food-lunch', useCount: 15 },
-  { id: '2', merchantName: '饿了么', categoryL1: 'food', categoryL2: 'food-dinner', useCount: 12 },
-  { id: '3', merchantName: '滴滴', categoryL1: 'transport', categoryL2: 'transport-taxi', useCount: 8 },
-  { id: '4', merchantName: '淘宝', categoryL1: 'shopping', categoryL2: 'shopping-daily', useCount: 20 },
-  { id: '5', merchantName: '京东', categoryL1: 'shopping', categoryL2: 'shopping-electronics', useCount: 10 },
-  { id: '6', merchantName: '星巴克', categoryL1: 'food', categoryL2: 'food-snack', useCount: 6 },
+  { id: 'm1', merchantName: '美团外卖', categoryL1: 'food', categoryL2: 'food-lunch', useCount: 0 },
+  { id: 'm2', merchantName: '美团优选', categoryL1: 'food', categoryL2: 'food-snack', useCount: 0 },
+  { id: 'm3', merchantName: '美团买菜', categoryL1: 'food', categoryL2: 'food-dinner', useCount: 0 },
+  { id: 'm4', merchantName: '美团', categoryL1: 'food', categoryL2: 'food-lunch', useCount: 0 },
+  { id: 'm5', merchantName: '饿了么', categoryL1: 'food', categoryL2: 'food-dinner', useCount: 0 },
+  { id: 'm6', merchantName: '星巴克', categoryL1: 'food', categoryL2: 'food-snack', useCount: 0 },
+  { id: 'm7', merchantName: '肯德基', categoryL1: 'food', categoryL2: 'food-lunch', useCount: 0 },
+  { id: 'm8', merchantName: '麦当劳', categoryL1: 'food', categoryL2: 'food-lunch', useCount: 0 },
+  { id: 'm9', merchantName: '瑞幸', categoryL1: 'food', categoryL2: 'food-snack', useCount: 0 },
+  { id: 'm10', merchantName: '喜茶', categoryL1: 'food', categoryL2: 'food-snack', useCount: 0 },
+  { id: 'm11', merchantName: '奈雪的茶', categoryL1: 'food', categoryL2: 'food-snack', useCount: 0 },
+  { id: 'm12', merchantName: '海底捞', categoryL1: 'food', categoryL2: 'food-dinner', useCount: 0 },
+  { id: 'm13', merchantName: '小龙坎', categoryL1: 'food', categoryL2: 'food-dinner', useCount: 0 },
+  { id: 'm14', merchantName: '太二', categoryL1: 'food', categoryL2: 'food-dinner', useCount: 0 },
+  { id: 'm15', merchantName: '西贝', categoryL1: 'food', categoryL2: 'food-dinner', useCount: 0 },
+  { id: 'm16', merchantName: '外婆家', categoryL1: 'food', categoryL2: 'food-dinner', useCount: 0 },
+  { id: 'm17', merchantName: '绿茶', categoryL1: 'food', categoryL2: 'food-dinner', useCount: 0 },
+  { id: 'm18', merchantName: '餐厅', categoryL1: 'food', categoryL2: 'food-dinner', useCount: 0 },
+  { id: 'm19', merchantName: '饭店', categoryL1: 'food', categoryL2: 'food-dinner', useCount: 0 },
+  { id: 'm20', merchantName: '小吃', categoryL1: 'food', categoryL2: 'food-snack', useCount: 0 },
+  { id: 'm21', merchantName: '早餐', categoryL1: 'food', categoryL2: 'food-breakfast', useCount: 0 },
+  { id: 'm22', merchantName: '午餐', categoryL1: 'food', categoryL2: 'food-lunch', useCount: 0 },
+  { id: 'm23', merchantName: '晚餐', categoryL1: 'food', categoryL2: 'food-dinner', useCount: 0 },
+  
+  { id: 't1', merchantName: '滴滴出行', categoryL1: 'transport', categoryL2: 'transport-taxi', useCount: 0 },
+  { id: 't2', merchantName: '滴滴', categoryL1: 'transport', categoryL2: 'transport-taxi', useCount: 0 },
+  { id: 't3', merchantName: '高德打车', categoryL1: 'transport', categoryL2: 'transport-taxi', useCount: 0 },
+  { id: 't4', merchantName: '首汽约车', categoryL1: 'transport', categoryL2: 'transport-taxi', useCount: 0 },
+  { id: 't5', merchantName: '曹操出行', categoryL1: 'transport', categoryL2: 'transport-taxi', useCount: 0 },
+  { id: 't6', merchantName: '出租车', categoryL1: 'transport', categoryL2: 'transport-taxi', useCount: 0 },
+  { id: 't7', merchantName: '出租', categoryL1: 'transport', categoryL2: 'transport-taxi', useCount: 0 },
+  { id: 't8', merchantName: '地铁', categoryL1: 'transport', categoryL2: 'transport-subway', useCount: 0 },
+  { id: 't9', merchantName: '公交', categoryL1: 'transport', categoryL2: 'transport-bus', useCount: 0 },
+  { id: 't10', merchantName: '高铁', categoryL1: 'transport', categoryL2: 'transport-taxi', useCount: 0 },
+  { id: 't11', merchantName: '火车', categoryL1: 'transport', categoryL2: 'transport-taxi', useCount: 0 },
+  { id: 't12', merchantName: '机票', categoryL1: 'transport', categoryL2: 'transport-taxi', useCount: 0 },
+  { id: 't13', merchantName: '航空', categoryL1: 'transport', categoryL2: 'transport-taxi', useCount: 0 },
+  { id: 't14', merchantName: '中石化', categoryL1: 'transport', categoryL2: 'transport-fuel', useCount: 0 },
+  { id: 't15', merchantName: '中石油', categoryL1: 'transport', categoryL2: 'transport-fuel', useCount: 0 },
+  { id: 't16', merchantName: '加油', categoryL1: 'transport', categoryL2: 'transport-fuel', useCount: 0 },
+  
+  { id: 's1', merchantName: '淘宝', categoryL1: 'shopping', categoryL2: 'shopping-daily', useCount: 0 },
+  { id: 's2', merchantName: '天猫', categoryL1: 'shopping', categoryL2: 'shopping-daily', useCount: 0 },
+  { id: 's3', merchantName: '京东', categoryL1: 'shopping', categoryL2: 'shopping-electronics', useCount: 0 },
+  { id: 's4', merchantName: '京东到家', categoryL1: 'shopping', categoryL2: 'shopping-daily', useCount: 0 },
+  { id: 's5', merchantName: '拼多多', categoryL1: 'shopping', categoryL2: 'shopping-daily', useCount: 0 },
+  { id: 's6', merchantName: '唯品会', categoryL1: 'shopping', categoryL2: 'shopping-clothes', useCount: 0 },
+  { id: 's7', merchantName: '小红书', categoryL1: 'shopping', categoryL2: 'shopping-beauty', useCount: 0 },
+  { id: 's8', merchantName: '抖音电商', categoryL1: 'shopping', categoryL2: 'shopping-daily', useCount: 0 },
+  { id: 's9', merchantName: '快手小店', categoryL1: 'shopping', categoryL2: 'shopping-daily', useCount: 0 },
+  { id: 's10', merchantName: '苏宁', categoryL1: 'shopping', categoryL2: 'shopping-electronics', useCount: 0 },
+  { id: 's11', merchantName: '国美', categoryL1: 'shopping', categoryL2: 'shopping-electronics', useCount: 0 },
+  { id: 's12', merchantName: '超市', categoryL1: 'shopping', categoryL2: 'shopping-daily', useCount: 0 },
+  { id: 's13', merchantName: '便利店', categoryL1: 'shopping', categoryL2: 'shopping-daily', useCount: 0 },
+  { id: 's14', merchantName: '屈臣氏', categoryL1: 'shopping', categoryL2: 'shopping-beauty', useCount: 0 },
+  { id: 's15', merchantName: '丝芙兰', categoryL1: 'shopping', categoryL2: 'shopping-beauty', useCount: 0 },
+  { id: 's16', merchantName: '优衣库', categoryL1: 'shopping', categoryL2: 'shopping-clothes', useCount: 0 },
+  { id: 's17', merchantName: 'ZARA', categoryL1: 'shopping', categoryL2: 'shopping-clothes', useCount: 0 },
+  { id: 's18', merchantName: 'H&M', categoryL1: 'shopping', categoryL2: 'shopping-clothes', useCount: 0 },
+  { id: 's19', merchantName: '无印良品', categoryL1: 'shopping', categoryL2: 'shopping-daily', useCount: 0 },
+  { id: 's20', merchantName: '名创优品', categoryL1: 'shopping', categoryL2: 'shopping-daily', useCount: 0 },
+  
+  { id: 'e1', merchantName: '电影', categoryL1: 'entertainment', categoryL2: 'entertainment-movie', useCount: 0 },
+  { id: 'e2', merchantName: '影城', categoryL1: 'entertainment', categoryL2: 'entertainment-movie', useCount: 0 },
+  { id: 'e3', merchantName: '影院', categoryL1: 'entertainment', categoryL2: 'entertainment-movie', useCount: 0 },
+  { id: 'e4', merchantName: '游戏', categoryL1: 'entertainment', categoryL2: 'entertainment-game', useCount: 0 },
+  { id: 'e5', merchantName: '腾讯游戏', categoryL1: 'entertainment', categoryL2: 'entertainment-game', useCount: 0 },
+  { id: 'e6', merchantName: '网易游戏', categoryL1: 'entertainment', categoryL2: 'entertainment-game', useCount: 0 },
+  { id: 'e7', merchantName: '王者荣耀', categoryL1: 'entertainment', categoryL2: 'entertainment-game', useCount: 0 },
+  { id: 'e8', merchantName: '和平精英', categoryL1: 'entertainment', categoryL2: 'entertainment-game', useCount: 0 },
+  { id: 'e9', merchantName: '旅游', categoryL1: 'entertainment', categoryL2: 'entertainment-travel', useCount: 0 },
+  { id: 'e10', merchantName: '携程', categoryL1: 'entertainment', categoryL2: 'entertainment-travel', useCount: 0 },
+  { id: 'e11', merchantName: '飞猪', categoryL1: 'entertainment', categoryL2: 'entertainment-travel', useCount: 0 },
+  { id: 'e12', merchantName: '去哪儿', categoryL1: 'entertainment', categoryL2: 'entertainment-travel', useCount: 0 },
+  { id: 'e13', merchantName: '同程', categoryL1: 'entertainment', categoryL2: 'entertainment-travel', useCount: 0 },
+  { id: 'e14', merchantName: '酒店', categoryL1: 'entertainment', categoryL2: 'entertainment-travel', useCount: 0 },
+  { id: 'e15', merchantName: '民宿', categoryL1: 'entertainment', categoryL2: 'entertainment-travel', useCount: 0 },
+  { id: 'e16', merchantName: '运动', categoryL1: 'entertainment', categoryL2: 'entertainment-sport', useCount: 0 },
+  { id: 'e17', merchantName: '健身房', categoryL1: 'entertainment', categoryL2: 'entertainment-sport', useCount: 0 },
+  { id: 'e18', merchantName: '美团运动', categoryL1: 'entertainment', categoryL2: 'entertainment-sport', useCount: 0 },
+  { id: 'e19', merchantName: 'KTV', categoryL1: 'entertainment', categoryL2: 'entertainment-movie', useCount: 0 },
+  { id: 'e20', merchantName: '酒吧', categoryL1: 'entertainment', categoryL2: 'entertainment-movie', useCount: 0 },
+  
+  { id: 'l1', merchantName: '房租', categoryL1: 'living', categoryL2: 'living-rent', useCount: 0 },
+  { id: 'l2', merchantName: '租金', categoryL1: 'living', categoryL2: 'living-rent', useCount: 0 },
+  { id: 'l3', merchantName: '水费', categoryL1: 'living', categoryL2: 'living-water', useCount: 0 },
+  { id: 'l4', merchantName: '电费', categoryL1: 'living', categoryL2: 'living-water', useCount: 0 },
+  { id: 'l5', merchantName: '燃气', categoryL1: 'living', categoryL2: 'living-water', useCount: 0 },
+  { id: 'l6', merchantName: '宽带', categoryL1: 'living', categoryL2: 'living-internet', useCount: 0 },
+  { id: 'l7', merchantName: '网费', categoryL1: 'living', categoryL2: 'living-internet', useCount: 0 },
+  { id: 'l8', merchantName: '物业', categoryL1: 'living', categoryL2: 'living-rent', useCount: 0 },
+  { id: 'l9', merchantName: '取暖', categoryL1: 'living', categoryL2: 'living-water', useCount: 0 },
+  
+  { id: 'med1', merchantName: '医院', categoryL1: 'medical', categoryL2: 'medical-hospital', useCount: 0 },
+  { id: 'med2', merchantName: '门诊', categoryL1: 'medical', categoryL2: 'medical-hospital', useCount: 0 },
+  { id: 'med3', merchantName: '挂号', categoryL1: 'medical', categoryL2: 'medical-hospital', useCount: 0 },
+  { id: 'med4', merchantName: '药店', categoryL1: 'medical', categoryL2: 'medical-drug', useCount: 0 },
+  { id: 'med5', merchantName: '药房', categoryL1: 'medical', categoryL2: 'medical-drug', useCount: 0 },
+  { id: 'med6', merchantName: '美团买药', categoryL1: 'medical', categoryL2: 'medical-drug', useCount: 0 },
+  { id: 'med7', merchantName: '阿里健康', categoryL1: 'medical', categoryL2: 'medical-drug', useCount: 0 },
+  { id: 'med8', merchantName: '体检', categoryL1: 'medical', categoryL2: 'medical-hospital', useCount: 0 },
+  
+  { id: 'st1', merchantName: '书店', categoryL1: 'study', categoryL2: 'study-book', useCount: 0 },
+  { id: 'st2', merchantName: '当当', categoryL1: 'study', categoryL2: 'study-book', useCount: 0 },
+  { id: 'st3', merchantName: '京东图书', categoryL1: 'study', categoryL2: 'study-book', useCount: 0 },
+  { id: 'st4', merchantName: '得到', categoryL1: 'study', categoryL2: 'study-course', useCount: 0 },
+  { id: 'st5', merchantName: '知识星球', categoryL1: 'study', categoryL2: 'study-course', useCount: 0 },
+  { id: 'st6', merchantName: '极客时间', categoryL1: 'study', categoryL2: 'study-course', useCount: 0 },
+  { id: 'st7', merchantName: '慕课', categoryL1: 'study', categoryL2: 'study-course', useCount: 0 },
+  { id: 'st8', merchantName: '网易云课堂', categoryL1: 'study', categoryL2: 'study-course', useCount: 0 },
+  { id: 'st9', merchantName: '课程', categoryL1: 'study', categoryL2: 'study-course', useCount: 0 },
+  { id: 'st10', merchantName: '培训', categoryL1: 'study', categoryL2: 'study-course', useCount: 0 },
+  
+  { id: 'sal1', merchantName: '工资', categoryL1: 'salary', categoryL2: 'salary-monthly', useCount: 0 },
+  { id: 'sal2', merchantName: '奖金', categoryL1: 'salary', categoryL2: 'salary-bonus', useCount: 0 },
+  { id: 'sal3', merchantName: '绩效', categoryL1: 'salary', categoryL2: 'salary-bonus', useCount: 0 },
+  
+  { id: 'inv1', merchantName: '基金', categoryL1: 'investment', categoryL2: 'investment-fund', useCount: 0 },
+  { id: 'inv2', merchantName: '股票', categoryL1: 'investment', categoryL2: 'investment-stock', useCount: 0 },
+  { id: 'inv3', merchantName: '利息', categoryL1: 'investment', categoryL2: 'investment-deposit', useCount: 0 },
+  { id: 'inv4', merchantName: '理财', categoryL1: 'investment', categoryL2: 'investment-fund', useCount: 0 },
+  
+  { id: 'pt1', merchantName: '兼职', categoryL1: 'part-time', categoryL2: 'part-time-gig', useCount: 0 },
+  { id: 'pt2', merchantName: '自由职业', categoryL1: 'part-time', categoryL2: 'part-time-freelance', useCount: 0 },
+  
+  { id: 'g1', merchantName: '红包', categoryL1: 'gift-income', categoryL2: 'gift-income-redpacket', useCount: 0 },
+  { id: 'g2', merchantName: '礼金', categoryL1: 'gift-income', categoryL2: 'gift-income-redpacket', useCount: 0 },
+  { id: 'g3', merchantName: '生日', categoryL1: 'gift-income', categoryL2: 'gift-income-birthday', useCount: 0 },
+  
+  { id: 'r1', merchantName: '退款', categoryL1: 'other-income', categoryL2: 'other-income-refund', useCount: 0 },
+  { id: 'r2', merchantName: '退回', categoryL1: 'other-income', categoryL2: 'other-income-refund', useCount: 0 },
 ];
+
+export const billCategoryMapping: Record<string, { categoryL1: string; categoryL2: string }> = {
+  '餐饮美食': { categoryL1: 'food', categoryL2: 'food-dinner' },
+  '食品饮料': { categoryL1: 'food', categoryL2: 'food-snack' },
+  '交通出行': { categoryL1: 'transport', categoryL2: 'transport-taxi' },
+  '购物消费': { categoryL1: 'shopping', categoryL2: 'shopping-daily' },
+  '日用百货': { categoryL1: 'shopping', categoryL2: 'shopping-daily' },
+  '居家生活': { categoryL1: 'living', categoryL2: 'living-rent' },
+  '休闲娱乐': { categoryL1: 'entertainment', categoryL2: 'entertainment-movie' },
+  '医疗健康': { categoryL1: 'medical', categoryL2: 'medical-hospital' },
+  '教育学习': { categoryL1: 'study', categoryL2: 'study-course' },
+  '生活服务': { categoryL1: 'other-expense', categoryL2: 'other-expense-gift' },
+  '转账红包': { categoryL1: 'other-expense', categoryL2: 'other-expense-redpacket' },
+  '充值缴费': { categoryL1: 'living', categoryL2: 'living-water' },
+  '金融理财': { categoryL1: 'investment', categoryL2: 'investment-fund' },
+  '工资': { categoryL1: 'salary', categoryL2: 'salary-monthly' },
+  '奖金': { categoryL1: 'salary', categoryL2: 'salary-bonus' },
+  '其他': { categoryL1: 'other-expense', categoryL2: 'other-expense-gift' },
+};
 
 export const defaultTransactions: Transaction[] = [
   { id: '1', date: '2026-07-08', amount: 35.5, type: 'expense', categoryL1: 'food', categoryL2: 'food-lunch', merchant: '美团外卖', note: '黄焖鸡米饭', source: 'manual', createdAt: '2026-07-08T12:30:00Z' },
@@ -119,13 +263,50 @@ export const getAllTransactions = (): Transaction[] => {
   return defaultTransactions;
 };
 
-export const matchCategoryByMerchant = (merchantName: string, rules: MerchantRule[]): { categoryL1: string; categoryL2: string } | null => {
+export const matchCategoryByMerchant = (merchantName: string, rules: MerchantRule[]): { categoryL1: string; categoryL2: string; ruleId?: string } | null => {
+  if (!merchantName || !rules.length) return null;
+  
+  const normalized = merchantName.trim().toLowerCase();
+  let bestMatch: MerchantRule | null = null;
+  let bestMatchLength = 0;
+  
   for (const rule of rules) {
-    if (merchantName.includes(rule.merchantName)) {
-      return { categoryL1: rule.categoryL1, categoryL2: rule.categoryL2 };
+    const ruleName = rule.merchantName.toLowerCase();
+    if (normalized.includes(ruleName)) {
+      if (ruleName.length > bestMatchLength) {
+        bestMatch = rule;
+        bestMatchLength = ruleName.length;
+      }
     }
   }
+  
+  if (bestMatch) {
+    return { 
+      categoryL1: bestMatch.categoryL1, 
+      categoryL2: bestMatch.categoryL2,
+      ruleId: bestMatch.id
+    };
+  }
   return null;
+};
+
+export const normalizeMerchant = (raw: string): string => {
+  if (!raw) return '';
+  
+  let name = raw.trim();
+  name = name.replace(/^\(特约\)/, '');
+  name = name.replace(/^财付通[-_]/, '');
+  name = name.replace(/^支付宝[-_]/, '');
+  name = name.replace(/^微信支付[-_]/, '');
+  name = name.replace(/[-_#]\d{8,}.*$/, '');
+  name = name.replace(/订单.*$/, '');
+  
+  const parts = name.split(/[-_——]/);
+  if (parts.length > 1 && parts[0].length <= 10) {
+    name = parts[0];
+  }
+  
+  return name.trim();
 };
 
 export const generateId = (): string => {
