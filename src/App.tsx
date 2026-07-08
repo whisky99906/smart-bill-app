@@ -3,6 +3,7 @@ import { BottomNav } from '@/components';
 import { 
   Home, 
   AddRecord, 
+  VoiceRecord, 
   Stats, 
   Profile, 
   Category, 
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/add" element={<AddRecord />} />
+          <Route path="/voice" element={<VoiceRecord />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/categories" element={<Category />} />

@@ -63,7 +63,7 @@ export const Home = () => {
             <PenTool size={28} className="text-clay-primary mb-2" />
             <span className="text-text-secondary text-sm">手动记账</span>
           </ClayCard>
-          <ClayCard className="p-4 flex flex-col items-center justify-center" onClick={() => navigate('/add')}>
+          <ClayCard className="p-4 flex flex-col items-center justify-center" onClick={() => navigate('/voice')}>
             <Mic size={28} className="text-clay-primary mb-2" />
             <span className="text-text-secondary text-sm">语音记账</span>
           </ClayCard>

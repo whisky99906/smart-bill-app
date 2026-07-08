@@ -99,7 +99,7 @@ export const AddRecord = () => {
   const subCategories = categoryL1 ? getSubCategories(categoryL1).filter(c => c.type === type || !c.type) : [];
 
   return (
-    <div className="min-h-screen bg-clay-bg pb-20">
+    <div className="min-h-screen bg-clay-bg pb-36">
       <div className="px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <button 

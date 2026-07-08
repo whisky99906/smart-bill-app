@@ -1,5 +1,6 @@
 export { Home } from './Home';
 export { AddRecord } from './AddRecord';
+export { VoiceRecord } from './VoiceRecord';
 export { Stats } from './Stats';
 export { Profile } from './Profile';
 export { Category } from './Category';
