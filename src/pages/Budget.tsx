@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClayCard, ClayButton } from '@/components';
 import { useTransactionStore } from '@/store/useStore';
+import { ArrowLeft } from 'lucide-react';
 
 const today = new Date();
 const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -23,7 +24,7 @@ export const Budget = () => {
             className="text-text-secondary text-lg"
             onClick={() => navigate('/')}
           >
-            ←
+            <ArrowLeft size={24} />
           </button>
           <h1 className="text-xl font-bold text-text-primary">预算设置</h1>
           <div className="w-6" />
@@ -42,7 +43,7 @@ export const Budget = () => {
           </div>
           <div className="h-4 bg-gray-200 rounded-full overflow-hidden mb-2">
             <div 
-              className="h-full bg-clay-yellow rounded-full transition-all duration-500"
+              className="h-full bg-clay-primary rounded-full transition-all duration-500"
               style={{ width: `${usedPercent}%` }}
             />
           </div>
@@ -57,7 +58,7 @@ export const Budget = () => {
             <span className="text-text-primary">当支出超过预算时提醒我</span>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-clay-purple"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-clay-primary"></div>
             </label>
           </div>
         </ClayCard>

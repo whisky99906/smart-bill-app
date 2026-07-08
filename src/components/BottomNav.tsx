@@ -1,10 +1,11 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Home, Plus, BarChart3, User } from 'lucide-react';
 
 const navItems = [
-  { id: 'home', label: '首页', icon: '🏠', path: '/' },
-  { id: 'add', label: '记账', icon: '+', path: '/add' },
-  { id: 'stats', label: '统计', icon: '📊', path: '/stats' },
-  { id: 'profile', label: '我的', icon: '👤', path: '/profile' },
+  { id: 'home', label: '首页', Icon: Home, path: '/' },
+  { id: 'add', label: '记账', Icon: Plus, path: '/add' },
+  { id: 'stats', label: '统计', Icon: BarChart3, path: '/stats' },
+  { id: 'profile', label: '我的', Icon: User, path: '/profile' },
 ];
 
 export const BottomNav = () => {
@@ -31,13 +32,13 @@ export const BottomNav = () => {
               <button
                 key={item.id}
                 onClick={() => navigate(item.path)}
-                className={`w-14 h-14 rounded-full flex items-center justify-center text-xl transition-all duration-200 ${
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 ${
                   activeItem === item.id
-                    ? 'bg-clay-yellow shadow-lg scale-110'
-                    : 'bg-clay-yellow/80'
+                    ? 'bg-clay-primary shadow-lg scale-110'
+                    : 'bg-clay-primary/80'
                 }`}
               >
-                {item.icon}
+                <item.Icon size={24} className="text-white" />
               </button>
             );
           }
@@ -46,10 +47,10 @@ export const BottomNav = () => {
               key={item.id}
               onClick={() => navigate(item.path)}
               className={`flex flex-col items-center justify-center w-16 h-full transition-all duration-200 ${
-                activeItem === item.id ? 'text-clay-purple' : 'text-text-tertiary'
+                activeItem === item.id ? 'text-clay-primary' : 'text-text-tertiary'
               }`}
             >
-              <span className="text-xl mb-1">{item.icon}</span>
+              <item.Icon size={22} className="mb-1" />
               <span className="text-xs">{item.label}</span>
             </button>
           );

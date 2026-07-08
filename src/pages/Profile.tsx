@@ -1,14 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { ClayCard } from '@/components';
 import { useTransactionStore } from '@/store/useStore';
+import { ArrowLeft, FolderOpen, Store, Upload, Wallet, Download, Settings, ChevronRight, User } from 'lucide-react';
 
 const menuItems = [
-  { icon: '📁', label: '分类管理', path: '/categories' },
-  { icon: '🏪', label: '商户规则库', path: '/merchant-rules' },
-  { icon: '📊', label: 'Excel导入记账', path: '/import' },
-  { icon: '💰', label: '预算设置', path: '/budget' },
-  { icon: '📤', label: '数据导出', path: '/export' },
-  { icon: '⚙️', label: '设置', path: '/settings' },
+  { Icon: FolderOpen, label: '分类管理', path: '/categories' },
+  { Icon: Store, label: '商户规则库', path: '/merchant-rules' },
+  { Icon: Upload, label: 'Excel导入记账', path: '/import' },
+  { Icon: Wallet, label: '预算设置', path: '/budget' },
+  { Icon: Download, label: '数据导出', path: '/export' },
+  { Icon: Settings, label: '设置', path: '/settings' },
 ];
 
 export const Profile = () => {
@@ -25,15 +26,15 @@ export const Profile = () => {
             className="text-text-secondary text-lg"
             onClick={() => navigate('/')}
           >
-            ←
+            <ArrowLeft size={24} />
           </button>
           <h1 className="text-xl font-bold text-text-primary">我的</h1>
           <div className="w-6" />
         </div>
 
         <ClayCard className="p-6 mb-6 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-clay-purple flex items-center justify-center text-3xl">
-            👤
+          <div className="w-16 h-16 rounded-full bg-clay-primary/20 flex items-center justify-center">
+            <User size={32} className="text-clay-primary" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-text-primary">威士忌</h2>
@@ -49,10 +50,10 @@ export const Profile = () => {
               onClick={() => navigate(item.path)}
             >
               <div className="flex items-center gap-3">
-                <span className="text-xl">{item.icon}</span>
+                <item.Icon size={22} className="text-clay-primary" />
                 <span className="text-text-primary">{item.label}</span>
               </div>
-              <span className="text-text-tertiary">→</span>
+              <ChevronRight size={18} className="text-text-tertiary" />
             </ClayCard>
           ))}
         </div>

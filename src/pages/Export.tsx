@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ClayCard, ClayButton } from '@/components';
 import { useTransactionStore } from '@/store/useStore';
+import { ArrowLeft, Download, FileSpreadsheet, Check } from 'lucide-react';
 
 export const Export = () => {
   const navigate = useNavigate();
@@ -35,14 +36,14 @@ export const Export = () => {
             className="text-text-secondary text-lg"
             onClick={() => navigate('/')}
           >
-            ←
+            <ArrowLeft size={24} />
           </button>
           <h1 className="text-xl font-bold text-text-primary">数据导出</h1>
           <div className="w-6" />
         </div>
 
         <ClayCard className="p-6 mb-6 text-center">
-          <span className="text-5xl mb-4 block">📤</span>
+          <Download size={48} className="mx-auto mb-4 text-clay-primary" />
           <p className="text-text-primary font-medium mb-2">导出账单数据</p>
           <p className="text-text-tertiary text-sm">
             共 {transactions.length} 条账单记录
@@ -53,13 +54,13 @@ export const Export = () => {
           <p className="text-text-secondary text-sm mb-4">导出格式</p>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">📊</span>
+              <FileSpreadsheet size={28} className="text-clay-primary" />
               <div>
                 <p className="text-text-primary">CSV 文件</p>
                 <p className="text-text-tertiary text-xs">支持 Excel 打开</p>
               </div>
             </div>
-            <span className="text-clay-purple">✓</span>
+            <Check size={18} className="text-clay-primary" />
           </div>
         </ClayCard>
 
@@ -70,21 +71,21 @@ export const Export = () => {
               <span className="text-text-primary">全部数据</span>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="radio" name="exportRange" defaultChecked className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-clay-purple"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-clay-primary"></div>
               </label>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-text-primary">本月数据</span>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="radio" name="exportRange" className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-clay-purple"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-clay-primary"></div>
               </label>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-text-primary">自定义时间</span>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="radio" name="exportRange" className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-clay-purple"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-clay-primary"></div>
               </label>
             </div>
           </div>

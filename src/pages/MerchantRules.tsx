@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClayCard, ClayButton, ClayInput, ClayModal } from '@/components';
 import { useMerchantRuleStore, useCategoryStore } from '@/store/useStore';
+import { getIcon } from '@/utils/icons';
 import type { Category } from '@/types';
+import { ArrowLeft, Plus, Edit3, Trash2, Search } from 'lucide-react';
 
 export const MerchantRules = () => {
   const navigate = useNavigate();
@@ -74,23 +76,23 @@ export const MerchantRules = () => {
             className="text-text-secondary text-lg"
             onClick={() => navigate('/')}
           >
-            ←
+            <ArrowLeft size={24} />
           </button>
           <h1 className="text-xl font-bold text-text-primary">商户规则库</h1>
           <button 
-            className="clay-button w-10 h-10 flex items-center justify-center bg-clay-yellow"
+            className="clay-button w-10 h-10 flex items-center justify-center bg-clay-primary text-white"
             onClick={() => {
               setEditingRule(null);
               setNewRule({ merchantName: '', categoryL1: '', categoryL2: '' });
               setShowModal(true);
             }}
           >
-            +
+            <Plus size={20} />
           </button>
         </div>
 
         <ClayCard className="p-3 mb-6 flex items-center gap-3">
-          <span className="text-text-tertiary">🔍</span>
+          <Search size={18} className="text-text-tertiary" />
           <input
             type="text"
             value={searchTerm}
@@ -104,6 +106,7 @@ export const MerchantRules = () => {
           {filteredRules.map((rule) => {
             const mainCategory = getCategoryById(rule.categoryL1);
             const subCategory = getCategoryById(rule.categoryL2);
+            const Icon = getIcon(mainCategory?.icon || 'other');
             return (
               <ClayCard key={rule.id} className="p-4 flex items-center justify-between">
                 <div>
@@ -112,12 +115,12 @@ export const MerchantRules = () => {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <span 
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-                      style={{ backgroundColor: mainCategory?.color }}
+                    <div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: `${mainCategory?.color}20` }}
                     >
-                      {mainCategory?.icon}
-                    </span>
+                      <Icon size={16} style={{ color: mainCategory?.color }} />
+                    </div>
                     <span className="text-text-secondary">
                       {mainCategory?.name} / {subCategory?.name}
                     </span>
@@ -127,13 +130,13 @@ export const MerchantRules = () => {
                       className="text-text-secondary text-sm"
                       onClick={() => handleEdit(rule.id)}
                     >
-                      ✏️
+                      <Edit3 size={16} />
                     </button>
                     <button 
-                      className="text-clay-pink text-sm"
+                      className="text-red-400 text-sm"
                       onClick={() => handleDelete(rule.id)}
                     >
-                      🗑️
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
@@ -173,22 +176,25 @@ export const MerchantRules = () => {
           <div>
             <label className="text-text-tertiary text-xs block mb-2">选择大类</label>
             <div className="flex flex-wrap gap-2">
-              {mainCategories.map((cat: Category) => (
-                <button
-                  key={cat.id}
-                  className={`px-3 py-2 rounded-lg flex items-center gap-2 transition-all ${
-                    newRule.categoryL1 === cat.id 
-                      ? 'bg-clay-purple text-white' 
-                      : 'bg-white text-text-secondary'
-                  }`}
-                  onClick={() => {
-                    setNewRule({ ...newRule, categoryL1: cat.id, categoryL2: '' });
-                  }}
-                >
-                  <span>{cat.icon}</span>
-                  <span>{cat.name}</span>
-                </button>
-              ))}
+              {mainCategories.map((cat: Category) => {
+                const Icon = getIcon(cat.icon);
+                return (
+                  <button
+                    key={cat.id}
+                    className={`px-3 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                      newRule.categoryL1 === cat.id 
+                        ? 'bg-clay-primary text-white' 
+                        : 'bg-white text-text-secondary'
+                    }`}
+                    onClick={() => {
+                      setNewRule({ ...newRule, categoryL1: cat.id, categoryL2: '' });
+                    }}
+                  >
+                    <Icon size={14} />
+                    <span>{cat.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -196,20 +202,23 @@ export const MerchantRules = () => {
             <div>
               <label className="text-text-tertiary text-xs block mb-2">选择小类</label>
               <div className="flex flex-wrap gap-2">
-                {getSubCategories(newRule.categoryL1).map((cat: Category) => (
-                  <button
-                    key={cat.id}
-                    className={`px-3 py-2 rounded-lg flex items-center gap-2 transition-all ${
-                      newRule.categoryL2 === cat.id 
-                        ? 'bg-clay-purple text-white' 
-                        : 'bg-white text-text-secondary'
-                    }`}
-                    onClick={() => setNewRule({ ...newRule, categoryL2: cat.id })}
-                  >
-                    <span>{cat.icon}</span>
-                    <span>{cat.name}</span>
-                  </button>
-                ))}
+                {getSubCategories(newRule.categoryL1).map((cat: Category) => {
+                  const Icon = getIcon(cat.icon);
+                  return (
+                    <button
+                      key={cat.id}
+                      className={`px-3 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                        newRule.categoryL2 === cat.id 
+                          ? 'bg-clay-primary text-white' 
+                          : 'bg-white text-text-secondary'
+                      }`}
+                      onClick={() => setNewRule({ ...newRule, categoryL2: cat.id })}
+                    >
+                      <Icon size={14} />
+                      <span>{cat.name}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ClayCard, ClayButton, ClayModal } from '@/components';
 import { useTransactionStore, useCategoryStore, useMerchantRuleStore } from '@/store/useStore';
+import { getIcon } from '@/utils/icons';
+import { ArrowLeft, Trash2, Store, FileText, Calendar } from 'lucide-react';
 
 const numberKeys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'];
 
@@ -104,17 +106,17 @@ export const AddRecord = () => {
             className="text-text-secondary text-lg"
             onClick={() => navigate('/')}
           >
-            ←
+            <ArrowLeft size={24} />
           </button>
           <h1 className="text-xl font-bold text-text-primary">
             {editId ? '编辑账单' : '记一笔'}
           </h1>
           {editId && (
             <button 
-              className="text-clay-pink text-lg"
+              className="text-red-400 text-lg"
               onClick={() => setShowDeleteModal(true)}
             >
-              🗑️
+              <Trash2 size={22} />
             </button>
           )}
         </div>
@@ -128,7 +130,7 @@ export const AddRecord = () => {
             <button
               className={`flex-1 py-3 rounded-xl transition-all ${
                 type === 'expense' 
-                  ? 'bg-clay-purple text-white shadow-lg' 
+                  ? 'bg-clay-primary text-white shadow-lg' 
                   : 'bg-gray-100 text-text-secondary'
               }`}
               onClick={() => setType('expense')}
@@ -138,7 +140,7 @@ export const AddRecord = () => {
             <button
               className={`flex-1 py-3 rounded-xl transition-all ${
                 type === 'income' 
-                  ? 'bg-clay-cyan text-white shadow-lg' 
+                  ? 'bg-clay-secondary text-white shadow-lg' 
                   : 'bg-gray-100 text-text-secondary'
               }`}
               onClick={() => setType('income')}
@@ -151,28 +153,31 @@ export const AddRecord = () => {
         <div className="mb-6">
           <p className="text-text-secondary text-sm mb-3">选择分类</p>
           <div className="flex gap-3 overflow-x-auto pb-2">
-            {mainCategories.map((cat) => (
-              <button
-                key={cat.id}
-                className={`flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all ${
-                  categoryL1 === cat.id 
-                    ? 'bg-clay-purple/20 shadow-lg scale-105' 
-                    : 'bg-white'
-                }`}
-                onClick={() => {
-                  setCategoryL1(cat.id);
-                  setCategoryL2('');
-                }}
-              >
-                <div 
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-xl"
-                  style={{ backgroundColor: cat.color }}
+            {mainCategories.map((cat) => {
+              const Icon = getIcon(cat.icon);
+              return (
+                <button
+                  key={cat.id}
+                  className={`flex flex-col items-center gap-2 px-4 py-3 rounded-xl transition-all ${
+                    categoryL1 === cat.id 
+                      ? 'bg-clay-primary/20 shadow-lg scale-105' 
+                      : 'bg-white'
+                  }`}
+                  onClick={() => {
+                    setCategoryL1(cat.id);
+                    setCategoryL2('');
+                  }}
                 >
-                  {cat.icon}
-                </div>
-                <span className="text-sm text-text-primary">{cat.name}</span>
-              </button>
-            ))}
+                  <div 
+                    className="w-12 h-12 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: `${cat.color}20` }}
+                  >
+                    <Icon size={24} style={{ color: cat.color }} />
+                  </div>
+                  <span className="text-sm text-text-primary">{cat.name}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -180,20 +185,23 @@ export const AddRecord = () => {
           <div className="mb-6">
             <p className="text-text-secondary text-sm mb-3">选择小类</p>
             <div className="flex flex-wrap gap-2">
-              {subCategories.map((cat) => (
-                <button
-                  key={cat.id}
-                  className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
-                    categoryL2 === cat.id 
-                      ? 'bg-clay-purple text-white' 
-                      : 'bg-white text-text-secondary'
-                  }`}
-                  onClick={() => setCategoryL2(cat.id)}
-                >
-                  <span>{cat.icon}</span>
-                  <span>{cat.name}</span>
-                </button>
-              ))}
+              {subCategories.map((cat) => {
+                const Icon = getIcon(cat.icon);
+                return (
+                  <button
+                    key={cat.id}
+                    className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
+                      categoryL2 === cat.id 
+                        ? 'bg-clay-primary text-white' 
+                        : 'bg-white text-text-secondary'
+                    }`}
+                    onClick={() => setCategoryL2(cat.id)}
+                  >
+                    <Icon size={16} />
+                    <span>{cat.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -201,7 +209,7 @@ export const AddRecord = () => {
         <ClayCard className="p-4 mb-4">
           <label className="text-text-tertiary text-xs block mb-2">商户</label>
           <div className="flex items-center gap-2">
-            <span className="text-text-tertiary">🏪</span>
+            <Store size={18} className="text-text-tertiary" />
             <input
               type="text"
               value={merchant}
@@ -215,7 +223,7 @@ export const AddRecord = () => {
         <ClayCard className="p-4 mb-4">
           <label className="text-text-tertiary text-xs block mb-2">备注</label>
           <div className="flex items-center gap-2">
-            <span className="text-text-tertiary">📝</span>
+            <FileText size={18} className="text-text-tertiary" />
             <input
               type="text"
               value={note}
@@ -229,7 +237,7 @@ export const AddRecord = () => {
         <ClayCard className="p-4 mb-6">
           <label className="text-text-tertiary text-xs block mb-2">日期</label>
           <div className="flex items-center gap-2">
-            <span className="text-text-tertiary">📅</span>
+            <Calendar size={18} className="text-text-tertiary" />
             <input
               type="date"
               value={date}

@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClayCard, PieChart } from '@/components';
 import { useTransactionStore, useCategoryStore } from '@/store/useStore';
+import { getIcon } from '@/utils/icons';
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const today = new Date();
 const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -73,7 +75,7 @@ export const Stats = () => {
             className="text-text-secondary text-lg"
             onClick={() => navigate('/')}
           >
-            ←
+            <ArrowLeft size={24} />
           </button>
           <h1 className="text-xl font-bold text-text-primary">统计分析</h1>
           <div className="w-6" />
@@ -84,7 +86,7 @@ export const Stats = () => {
             className="clay-button w-10 h-10 flex items-center justify-center"
             onClick={handlePrevMonth}
           >
-            ←
+            <ChevronLeft size={20} />
           </button>
           <span className="text-xl font-bold text-text-primary">
             {selectedMonth.replace('-', '年')}月
@@ -93,7 +95,7 @@ export const Stats = () => {
             className="clay-button w-10 h-10 flex items-center justify-center"
             onClick={handleNextMonth}
           >
-            →
+            <ChevronRight size={20} />
           </button>
         </div>
 
@@ -128,6 +130,7 @@ export const Stats = () => {
         <h2 className="text-lg font-bold text-text-primary mb-4">分类明细</h2>
         {Object.entries(categoryStats).map(([catId, data]) => {
           const category = getCategoryById(catId);
+          const Icon = getIcon(category?.icon || 'other');
           const percent = totalExpense > 0 ? (data.amount / totalExpense) * 100 : 0;
           return (
             <ClayCard key={catId} className="p-4 mb-3">
@@ -135,9 +138,9 @@ export const Stats = () => {
                 <div className="flex items-center gap-3">
                   <div 
                     className="w-10 h-10 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: category?.color }}
+                    style={{ backgroundColor: `${category?.color}20` }}
                   >
-                    {category?.icon}
+                    <Icon size={20} style={{ color: category?.color }} />
                   </div>
                   <div>
                     <p className="text-text-primary font-medium">{category?.name}</p>

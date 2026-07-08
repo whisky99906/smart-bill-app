@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import { ClayCard, ClayButton, ClayTab } from '@/components';
 import { useTransactionStore, useCategoryStore, useMerchantRuleStore } from '@/store/useStore';
 import type { Category } from '@/types';
+import { ArrowLeft, Upload, CheckCircle } from 'lucide-react';
 
 type FieldType = 'date' | 'amount' | 'merchant' | 'type' | 'note' | 'category' | 'ignore';
 
@@ -195,7 +196,7 @@ export const ExcelImport = () => {
             className="text-text-secondary text-lg"
             onClick={() => navigate('/')}
           >
-            ←
+            <ArrowLeft size={24} />
           </button>
           <h1 className="text-xl font-bold text-text-primary">Excel导入</h1>
           <div className="w-6" />
@@ -228,7 +229,7 @@ export const ExcelImport = () => {
                 onChange={handleFileUpload}
                 className="hidden"
               />
-              <span className="text-5xl mb-4 block">📁</span>
+              <Upload size={48} className="mx-auto mb-4 text-clay-primary" />
               <p className="text-text-primary font-medium mb-2">点击选择文件</p>
               <p className="text-text-tertiary text-sm">或拖拽文件到此处</p>
               <p className="text-text-tertiary text-xs mt-4">支持 .xlsx / .xls / .csv</p>
@@ -345,12 +346,12 @@ export const ExcelImport = () => {
 
         {step === 4 && importResult && (
           <div className="text-center py-12">
-            <span className="text-6xl mb-4 block">🎉</span>
+            <CheckCircle size={64} className="mx-auto mb-4 text-green-500" />
             <h2 className="text-2xl font-bold text-text-primary mb-2">
               成功导入 {importResult.success} 条账单
             </h2>
             {importResult.failed > 0 && (
-              <p className="text-clay-pink mb-6">
+              <p className="text-red-400 mb-6">
                 有 {importResult.failed} 条导入失败
               </p>
             )}
