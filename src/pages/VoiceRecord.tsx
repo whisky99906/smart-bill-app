@@ -138,7 +138,24 @@ export const VoiceRecord = () => {
       
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
-        setError('语音识别失败，请检查麦克风权限');
+        let errorMsg = '语音识别失败';
+        switch (event.error) {
+          case 'not-allowed':
+            errorMsg = '麦克风权限被拒绝，请在浏览器地址栏左侧点击🔒图标，允许麦克风权限';
+            break;
+          case 'no-speech':
+            errorMsg = '未检测到语音，请重试';
+            break;
+          case 'network':
+            errorMsg = '网络连接异常，请检查网络';
+            break;
+          case 'service-not-allowed':
+            errorMsg = '当前浏览器不支持语音识别，请使用Chrome浏览器';
+            break;
+          default:
+            errorMsg = `语音识别失败: ${event.error}`;
+        }
+        setError(errorMsg);
         setState('idle');
       };
       

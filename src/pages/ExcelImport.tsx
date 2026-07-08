@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { ClayCard, ClayButton, ClayTab } from '@/components';
 import { useTransactionStore, useCategoryStore, useMerchantRuleStore } from '@/store/useStore';
+import { getIcon } from '@/utils/icons';
+import { suggestCategory } from '@/utils/aiService';
 import type { Category } from '@/types';
-import { ArrowLeft, Upload, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Upload, CheckCircle, Sparkles, Wand2, Bot, Loader2 } from 'lucide-react';
 
 type FieldType = 'date' | 'amount' | 'merchant' | 'type' | 'note' | 'category' | 'ignore';
 
 interface ParsedRow {
-  [key: string]: string;
+  [key: string]: string | number;
 }
 
 interface ImportRow {
@@ -22,6 +24,161 @@ interface ImportRow {
   categoryL1: string;
   categoryL2: string;
 }
+
+const wechatKeywords = ['微信支付', '微信昵称', '微信支付账单明细'];
+const alipayKeywords = ['支付宝', '支付宝交易'];
+
+const smartCategoryKeywords: Record<string, { l1: string; l2: string }[]> = {
+  餐饮: [{ l1: 'food', l2: 'food-lunch' }, { l1: 'food', l2: 'food-dinner' }, { l1: 'food', l2: 'food-breakfast' }],
+  外卖: [{ l1: 'food', l2: 'food-lunch' }, { l1: 'food', l2: 'food-dinner' }],
+  奶茶: [{ l1: 'food', l2: 'food-snack' }],
+  咖啡: [{ l1: 'food', l2: 'food-snack' }],
+  零食: [{ l1: 'food', l2: 'food-snack' }],
+  早餐: [{ l1: 'food', l2: 'food-breakfast' }],
+  午餐: [{ l1: 'food', l2: 'food-lunch' }],
+  晚餐: [{ l1: 'food', l2: 'food-dinner' }],
+  服装: [{ l1: 'shopping', l2: 'shopping-clothes' }],
+  购物: [{ l1: 'shopping', l2: 'shopping-daily' }],
+  数码: [{ l1: 'shopping', l2: 'shopping-electronics' }],
+  美妆: [{ l1: 'shopping', l2: 'shopping-beauty' }],
+  公交: [{ l1: 'transport', l2: 'transport-bus' }],
+  地铁: [{ l1: 'transport', l2: 'transport-subway' }],
+  打车: [{ l1: 'transport', l2: 'transport-taxi' }],
+  滴滴: [{ l1: 'transport', l2: 'transport-taxi' }],
+  加油: [{ l1: 'transport', l2: 'transport-fuel' }],
+  电影: [{ l1: 'entertainment', l2: 'entertainment-movie' }],
+  游戏: [{ l1: 'entertainment', l2: 'entertainment-game' }],
+  旅行: [{ l1: 'entertainment', l2: 'entertainment-travel' }],
+  运动: [{ l1: 'entertainment', l2: 'entertainment-sport' }],
+  房租: [{ l1: 'living', l2: 'living-rent' }],
+  水电: [{ l1: 'living', l2: 'living-water' }],
+  网费: [{ l1: 'living', l2: 'living-internet' }],
+  工资: [{ l1: 'salary', l2: 'salary-monthly' }],
+  奖金: [{ l1: 'salary', l2: 'salary-bonus' }],
+  理财: [{ l1: 'investment', l2: 'investment-fund' }],
+  红包: [{ l1: 'gift-income', l2: 'gift-income-redpacket' }, { l1: 'other-expense', l2: 'other-expense-redpacket' }],
+  医疗: [{ l1: 'medical', l2: 'medical-hospital' }, { l1: 'medical', l2: 'medical-drug' }],
+  书籍: [{ l1: 'study', l2: 'study-book' }],
+  课程: [{ l1: 'study', l2: 'study-course' }],
+  美团: [{ l1: 'food', l2: 'food-lunch' }, { l1: 'food', l2: 'food-dinner' }, { l1: 'food', l2: 'food-snack' }],
+  饿了么: [{ l1: 'food', l2: 'food-lunch' }, { l1: 'food', l2: 'food-dinner' }],
+  星巴克: [{ l1: 'food', l2: 'food-snack' }],
+  肯德基: [{ l1: 'food', l2: 'food-lunch' }],
+  麦当劳: [{ l1: 'food', l2: 'food-lunch' }],
+  瑞幸: [{ l1: 'food', l2: 'food-snack' }],
+  淘宝: [{ l1: 'shopping', l2: 'shopping-daily' }],
+  京东: [{ l1: 'shopping', l2: 'shopping-electronics' }],
+  拼多多: [{ l1: 'shopping', l2: 'shopping-daily' }],
+  滴滴出行: [{ l1: 'transport', l2: 'transport-taxi' }],
+  高德: [{ l1: 'transport', l2: 'transport-taxi' }],
+  携程: [{ l1: 'entertainment', l2: 'entertainment-travel' }],
+  美团外卖: [{ l1: 'food', l2: 'food-lunch' }, { l1: 'food', l2: 'food-dinner' }],
+};
+
+const detectBillType = (jsonData: ParsedRow[]): 'wechat' | 'alipay' | 'unknown' => {
+  const firstFewRows = jsonData.slice(0, 15).map(row => JSON.stringify(row)).join('');
+  if (wechatKeywords.some(k => firstFewRows.includes(k))) return 'wechat';
+  if (alipayKeywords.some(k => firstFewRows.includes(k))) return 'alipay';
+  return 'unknown';
+};
+
+const parseWechatBill = (jsonData: ParsedRow[]): ParsedRow[] => {
+  const data: ParsedRow[] = [];
+  let headerRow = -1;
+  
+  for (let i = 0; i < jsonData.length; i++) {
+    const row = jsonData[i];
+    const keys = Object.keys(row);
+    
+    if (keys.some(k => row[k] === '交易时间')) {
+      headerRow = i;
+      continue;
+    }
+    
+    if (headerRow >= 0 && i > headerRow) {
+      const dateValue = row[keys[0]];
+      const dateStr = typeof dateValue === 'number' 
+        ? formatExcelDate(dateValue) 
+        : String(dateValue || '');
+      
+      data.push({
+        date: dateStr,
+        type: String(row[keys[3]] || ''),
+        merchant: String(row[keys[2]] || ''),
+        note: String(row[keys[1]] || '') + ' ' + String(row[keys[9]] || ''),
+        amount: String(row[keys[4]] || ''),
+        incomeExpense: String(row[keys[3]] || ''),
+      });
+    }
+  }
+  
+  return data;
+};
+
+const parseAlipayBill = (jsonData: ParsedRow[]): ParsedRow[] => {
+  const data: ParsedRow[] = [];
+  let headerRow = -1;
+  
+  for (let i = 0; i < jsonData.length; i++) {
+    const row = jsonData[i];
+    const keys = Object.keys(row);
+    
+    if (keys.some(k => String(row[k]).includes('交易时间'))) {
+      headerRow = i;
+      continue;
+    }
+    
+    if (headerRow >= 0 && i > headerRow) {
+      let dateKey = '';
+      let amountKey = '';
+      let typeKey = '';
+      let merchantKey = '';
+      let noteKey = '';
+      
+      for (const key of keys) {
+        if (key.includes('时间') || key.includes('日期')) dateKey = key;
+        if (key.includes('金额') || key.includes('收支')) amountKey = key;
+        if (key.includes('类型') || key.includes('收/支')) typeKey = key;
+        if (key.includes('名称') || key.includes('商家') || key.includes('商户')) merchantKey = key;
+        if (key.includes('备注') || key.includes('商品') || key.includes('摘要')) noteKey = key;
+      }
+      
+      data.push({
+        date: String(row[dateKey] || ''),
+        type: String(row[typeKey] || ''),
+        merchant: String(row[merchantKey] || ''),
+        note: String(row[noteKey] || ''),
+        amount: String(row[amountKey] || ''),
+        incomeExpense: String(row[typeKey] || ''),
+      });
+    }
+  }
+  
+  return data;
+};
+
+const formatExcelDate = (excelDate: number): string => {
+  const date = new Date((excelDate - 25569) * 86400 * 1000);
+  return date.toISOString().split('T')[0];
+};
+
+const smartMatchCategory = (text: string, type: 'expense' | 'income' | ''): { l1: string; l2: string } | null => {
+  for (const [keyword, categories] of Object.entries(smartCategoryKeywords)) {
+    if (text.includes(keyword)) {
+      const filtered = categories.filter(c => {
+        if (type === 'income') {
+          return c.l1 === 'salary' || c.l1 === 'investment' || c.l1 === 'part-time' || c.l1 === 'gift-income' || c.l1 === 'other-income';
+        }
+        if (type === 'expense') {
+          return c.l1 !== 'salary' && c.l1 !== 'investment' && c.l1 !== 'part-time' && c.l1 !== 'gift-income' && c.l1 !== 'other-income';
+        }
+        return true;
+      });
+      return filtered[0] || categories[0];
+    }
+  }
+  return null;
+};
 
 export const ExcelImport = () => {
   const navigate = useNavigate();
@@ -37,6 +194,7 @@ export const ExcelImport = () => {
   const [fieldMapping, setFieldMapping] = useState<Record<string, FieldType>>({});
   const [importRows, setImportRows] = useState<ImportRow[]>([]);
   const [importResult, setImportResult] = useState<{ success: number; failed: number } | null>(null);
+  const [isAiMatching, setIsAiMatching] = useState(false);
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -50,11 +208,31 @@ export const ExcelImport = () => {
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json<ParsedRow>(worksheet);
       
-      if (jsonData.length > 0) {
-        setHeaders(Object.keys(jsonData[0]));
-        setRows(jsonData.slice(0, 50));
-        setFullRows(jsonData);
-        setStep(2);
+      const detectedType = detectBillType(jsonData);
+      let parsedData = jsonData;
+      if (detectedType === 'wechat') {
+        parsedData = parseWechatBill(jsonData);
+      } else if (detectedType === 'alipay') {
+        parsedData = parseAlipayBill(jsonData);
+      }
+      
+      if (parsedData.length > 0) {
+        setHeaders(Object.keys(parsedData[0]));
+        setRows(parsedData.slice(0, 50));
+        setFullRows(parsedData);
+        
+        if (detectedType !== 'unknown') {
+          setFieldMapping({
+            date: 'date',
+            amount: 'amount',
+            merchant: 'merchant',
+            type: 'type',
+            note: 'note',
+          });
+          handleNextStep(parsedData);
+        } else {
+          setStep(2);
+        }
       }
     };
     reader.readAsArrayBuffer(selectedFile);
@@ -73,11 +251,31 @@ export const ExcelImport = () => {
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json<ParsedRow>(worksheet);
       
-      if (jsonData.length > 0) {
-        setHeaders(Object.keys(jsonData[0]));
-        setRows(jsonData.slice(0, 50));
-        setFullRows(jsonData);
-        setStep(2);
+      const detectedType = detectBillType(jsonData);
+      let parsedData = jsonData;
+      if (detectedType === 'wechat') {
+        parsedData = parseWechatBill(jsonData);
+      } else if (detectedType === 'alipay') {
+        parsedData = parseAlipayBill(jsonData);
+      }
+      
+      if (parsedData.length > 0) {
+        setHeaders(Object.keys(parsedData[0]));
+        setRows(parsedData.slice(0, 50));
+        setFullRows(parsedData);
+        
+        if (detectedType !== 'unknown') {
+          setFieldMapping({
+            date: 'date',
+            amount: 'amount',
+            merchant: 'merchant',
+            type: 'type',
+            note: 'note',
+          });
+          handleNextStep(parsedData);
+        } else {
+          setStep(2);
+        }
       }
     };
     reader.readAsArrayBuffer(droppedFile);
@@ -87,28 +285,48 @@ export const ExcelImport = () => {
     setFieldMapping({ ...fieldMapping, [header]: field });
   };
 
-  const handleNextStep = () => {
-    const mappedRows: ImportRow[] = fullRows.map((row) => {
-      const date = row[headers.find(h => fieldMapping[h] === 'date') || ''] || '';
-      const amount = row[headers.find(h => fieldMapping[h] === 'amount') || ''] || '';
-      const merchant = row[headers.find(h => fieldMapping[h] === 'merchant') || ''] || '';
-      const type = row[headers.find(h => fieldMapping[h] === 'type') || ''] || '';
-      const note = row[headers.find(h => fieldMapping[h] === 'note') || ''] || '';
+  const handleNextStep = (data?: ParsedRow[]) => {
+    const rowsToProcess = data || fullRows;
+    
+    const mappedRows: ImportRow[] = rowsToProcess.map((row) => {
+      const date = String(row[headers.find(h => fieldMapping[h] === 'date') || ''] || '');
+      const amount = String(row[headers.find(h => fieldMapping[h] === 'amount') || ''] || '');
+      const merchant = String(row[headers.find(h => fieldMapping[h] === 'merchant') || ''] || '');
+      const type = String(row[headers.find(h => fieldMapping[h] === 'type') || ''] || '');
+      const note = String(row[headers.find(h => fieldMapping[h] === 'note') || ''] || '');
+
+      const textToMatch = `${merchant} ${note} ${type}`;
+      const incomeExpense = String(row['incomeExpense'] || type);
+      const isIncome = incomeExpense.includes('收入') || incomeExpense.includes('+') || incomeExpense.includes('转入');
+      const isExpense = incomeExpense.includes('支出') || incomeExpense.includes('-') || incomeExpense.includes('转出');
+      const transactionType = isIncome ? 'income' : (isExpense ? 'expense' : '');
 
       let categoryL1 = '';
       let categoryL2 = '';
-      const matched = matchMerchant(merchant);
-      if (matched) {
-        categoryL1 = matched.categoryL1;
-        categoryL2 = matched.categoryL2;
+      
+      const smartMatch = smartMatchCategory(textToMatch, transactionType);
+      if (smartMatch) {
+        categoryL1 = smartMatch.l1;
+        categoryL2 = smartMatch.l2;
+      } else {
+        const matched = matchMerchant(merchant);
+        if (matched) {
+          categoryL1 = matched.categoryL1;
+          categoryL2 = matched.categoryL2;
+        }
+      }
+
+      if (!categoryL1) {
+        categoryL1 = transactionType === 'income' ? 'other-income' : 'other-expense';
+        categoryL2 = transactionType === 'income' ? 'other-income-unknown' : 'other-expense-gift';
       }
 
       return {
         original: row,
-        date: formatDate(date),
-        amount: formatAmount(amount),
+        date: formatDate(String(date)),
+        amount: formatAmount(String(amount)),
         merchant,
-        type: (type.includes('收入') || type.includes('+')) ? 'income' : (type.includes('支出') || type.includes('-')) ? 'expense' : '',
+        type: transactionType,
         note,
         categoryL1,
         categoryL2,
@@ -147,6 +365,47 @@ export const ExcelImport = () => {
       newRows[rowIndex].categoryL2 = value;
     }
     setImportRows(newRows);
+  };
+
+  const handleBatchAutoMatch = () => {
+    const newRows = importRows.map((row) => {
+      if (row.categoryL1 && row.categoryL2) return row;
+      
+      const textToMatch = `${row.merchant} ${row.note}`;
+      const smartMatch = smartMatchCategory(textToMatch, row.type);
+      if (smartMatch) {
+        return { ...row, categoryL1: smartMatch.l1, categoryL2: smartMatch.l2 };
+      }
+      return row;
+    });
+    setImportRows(newRows);
+  };
+
+  const handleAIMatch = async () => {
+    setIsAiMatching(true);
+    
+    const uncategorizedRows = importRows.map((row, index) => ({
+      index,
+      merchant: row.merchant,
+      note: row.note,
+      type: row.type,
+    })).filter(row => !row.merchant || !row.note || (!row.type && (!row.merchant.includes('收入') && !row.merchant.includes('支出'))));
+
+    const newRows = [...importRows];
+    
+    for (const { index, merchant, note, type } of uncategorizedRows) {
+      const suggestion = await suggestCategory(merchant, note, type);
+      if (suggestion && suggestion.confidence > 0.6) {
+        newRows[index] = {
+          ...newRows[index],
+          categoryL1: suggestion.categoryL1,
+          categoryL2: suggestion.categoryL2,
+        };
+      }
+    }
+    
+    setImportRows(newRows);
+    setIsAiMatching(false);
   };
 
   const handleImport = () => {
@@ -219,6 +478,14 @@ export const ExcelImport = () => {
 
         {step === 1 && (
           <div>
+            <ClayCard className="p-4 mb-4 flex items-center gap-3">
+              <Sparkles size={24} className="text-clay-primary" />
+              <div>
+                <p className="text-text-primary font-medium">智能识别</p>
+                <p className="text-text-tertiary text-sm">支持微信支付、支付宝账单自动解析和智能分类</p>
+              </div>
+            </ClayCard>
+            
             <ClayCard 
               className="p-12 text-center border-2 border-dashed border-gray-300 cursor-pointer"
               onDrop={handleDrop}
@@ -285,7 +552,7 @@ export const ExcelImport = () => {
               </ClayButton>
               <ClayButton 
                 className="flex-1" 
-                onClick={handleNextStep}
+                onClick={() => handleNextStep()}
                 disabled={!fieldMapping.date || !fieldMapping.amount || !fieldMapping.merchant}
               >
                 下一步
@@ -298,46 +565,67 @@ export const ExcelImport = () => {
           <div>
             <div className="flex items-center justify-between mb-4">
               <p className="text-text-secondary text-sm">
-                共 {importRows.length} 条，已自动分类 {importRows.filter(r => r.categoryL1).length} 条
+                共 {importRows.length} 条，已智能分类 {importRows.filter(r => r.categoryL1 && r.categoryL2).length} 条
               </p>
-              <ClayButton className="px-4 py-2 text-sm" onClick={handleImport}>
-                确认导入
-              </ClayButton>
+              <div className="flex gap-2">
+                <ClayButton className="px-4 py-2 text-sm" variant="secondary" onClick={handleBatchAutoMatch}>
+                  <Wand2 size={16} className="mr-2" />
+                  关键词匹配
+                </ClayButton>
+                <ClayButton className="px-4 py-2 text-sm" variant="secondary" onClick={handleAIMatch} disabled={isAiMatching}>
+                  {isAiMatching ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Bot size={16} className="mr-2" />}
+                  {isAiMatching ? 'AI分析中...' : 'AI智能分类'}
+                </ClayButton>
+                <ClayButton className="px-4 py-2 text-sm" onClick={handleImport}>
+                  确认导入
+                </ClayButton>
+              </div>
             </div>
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {importRows.map((row, index) => (
-                <ClayCard key={index} className="p-3 flex flex-wrap items-center gap-2 text-sm">
-                  <span className="text-text-tertiary w-12">{row.date}</span>
-                  <span className="text-text-primary flex-1">{row.merchant}</span>
-                  <span className={`font-bold ${row.type === 'income' ? 'text-green-500' : 'text-red-400'}`}>
-                    ¥{row.amount}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={row.categoryL1}
-                      onChange={(e) => handleCategoryChange(index, 'L1', e.target.value)}
-                      className="clay-input text-xs w-24"
-                    >
-                      <option value="">选择大类</option>
-                      {mainCategories.map((cat: Category) => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
-                    {row.categoryL1 && (
-                      <select
-                        value={row.categoryL2}
-                        onChange={(e) => handleCategoryChange(index, 'L2', e.target.value)}
-                        className="clay-input text-xs w-24"
+              {importRows.map((row, index) => {
+                const mainCategory = getMainCategories().find(c => c.id === row.categoryL1);
+                const MainIcon = getIcon(mainCategory?.icon || 'other');
+                
+                return (
+                  <ClayCard key={index} className="p-3 flex flex-wrap items-center gap-2 text-sm">
+                    <span className="text-text-tertiary w-14">{row.date}</span>
+                    <span className={`font-bold w-20 text-right ${row.type === 'income' ? 'text-green-500' : 'text-red-400'}`}>
+                      {row.type === 'income' ? '+' : '-'}¥{row.amount}
+                    </span>
+                    <span className="text-text-primary flex-1 truncate">{row.merchant}</span>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: `${mainCategory?.color}20` }}
                       >
-                        <option value="">选择小类</option>
-                        {getSubCategories(row.categoryL1).map((cat: Category) => (
+                        <MainIcon size={16} style={{ color: mainCategory?.color }} />
+                      </div>
+                      <select
+                        value={row.categoryL1}
+                        onChange={(e) => handleCategoryChange(index, 'L1', e.target.value)}
+                        className="clay-input text-xs w-20"
+                      >
+                        <option value="">选择大类</option>
+                        {mainCategories.map((cat: Category) => (
                           <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
                       </select>
-                    )}
-                  </div>
-                </ClayCard>
-              ))}
+                      {row.categoryL1 && (
+                        <select
+                          value={row.categoryL2}
+                          onChange={(e) => handleCategoryChange(index, 'L2', e.target.value)}
+                          className="clay-input text-xs w-20"
+                        >
+                          <option value="">选择小类</option>
+                          {getSubCategories(row.categoryL1).map((cat: Category) => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </ClayCard>
+                );
+              })}
             </div>
             <div className="flex gap-4 mt-6">
               <ClayButton className="flex-1" variant="secondary" onClick={() => setStep(2)}>
