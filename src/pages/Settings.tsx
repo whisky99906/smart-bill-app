@@ -1,8 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClayCard, ClayButton } from '@/components';
-import { setAIConfig, getAIConfig } from '@/utils/aiService';
+import { setAIConfig, getAIConfig, type AIModelConfig } from '@/utils/aiService';
 import { ArrowLeft, Shield, Bell, Database, Info, FileText, ChevronRight, Bot, Check } from 'lucide-react';
+
+const modelTemplates: Record<string, { baseUrl: string; model: string; name: string }> = {
+  qwen: {
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    model: 'qwen-turbo',
+    name: 'Qwen-turbo (通义千问)',
+  },
+  doubao: {
+    baseUrl: 'https://api.doubao.com/v1',
+    model: 'doubao-3',
+    name: 'Doubao 3.0 (豆包)',
+  },
+  openai: {
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-4o-mini',
+    name: 'GPT-4o Mini (OpenAI)',
+  },
+  custom: {
+    baseUrl: '',
+    model: '',
+    name: '自定义',
+  },
+};
 
 const settingsItems = [
   { label: '账户与安全', Icon: Shield },
@@ -16,11 +39,28 @@ const settingsItems = [
 export const Settings = () => {
   const navigate = useNavigate();
   const [showAIConfig, setShowAIConfig] = useState(false);
-  const [apiKey, setApiKey] = useState(getAIConfig().apiKey);
   const [saved, setSaved] = useState(false);
+  
+  const [config, setConfig] = useState<AIModelConfig>(getAIConfig());
+
+  useEffect(() => {
+    setConfig(getAIConfig());
+  }, []);
+
+  const handleModelChange = (modelKey: string) => {
+    const template = modelTemplates[modelKey];
+    if (template) {
+      setConfig({
+        ...config,
+        name: modelKey,
+        baseUrl: template.baseUrl,
+        model: template.model,
+      });
+    }
+  };
 
   const handleSaveAIConfig = () => {
-    setAIConfig({ apiKey });
+    setAIConfig(config);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -52,22 +92,60 @@ export const Settings = () => {
 
         {showAIConfig && (
           <ClayCard className="p-4 mb-6">
-            <p className="text-text-tertiary text-xs mb-4">配置 AI API Key 以启用智能分类功能</p>
+            <p className="text-text-tertiary text-xs mb-4">配置 AI 服务以启用智能分类功能</p>
             <div className="space-y-4">
+              <div>
+                <label className="text-text-secondary text-sm mb-2 block">选择模型</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(modelTemplates).map(([key, template]) => (
+                    <button
+                      key={key}
+                      className={`p-2 text-xs rounded-xl border-2 transition-all ${
+                        config.name === key 
+                          ? 'border-clay-primary bg-clay-primary/10' 
+                          : 'border-transparent bg-gray-100'
+                      }`}
+                      onClick={() => handleModelChange(key)}
+                    >
+                      {template.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="text-text-secondary text-sm mb-2 block">API Key</label>
                 <input
                   type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
+                  value={config.apiKey}
+                  onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
                   placeholder="请输入您的 API Key"
                   className="clay-input w-full"
                 />
               </div>
+
               <div>
-                <label className="text-text-secondary text-sm mb-2 block">当前模型</label>
-                <p className="text-text-primary text-sm bg-gray-100 rounded-xl px-3 py-2">Qwen-turbo (通义千问)</p>
+                <label className="text-text-secondary text-sm mb-2 block">Base URL</label>
+                <input
+                  type="text"
+                  value={config.baseUrl}
+                  onChange={(e) => setConfig({ ...config, baseUrl: e.target.value })}
+                  placeholder="API 基础地址"
+                  className="clay-input w-full"
+                />
               </div>
+
+              <div>
+                <label className="text-text-secondary text-sm mb-2 block">模型名称</label>
+                <input
+                  type="text"
+                  value={config.model}
+                  onChange={(e) => setConfig({ ...config, model: e.target.value })}
+                  placeholder="模型标识符"
+                  className="clay-input w-full"
+                />
+              </div>
+
               <ClayButton className="w-full" onClick={handleSaveAIConfig}>
                 {saved ? <Check size={18} className="mr-2" /> : null}
                 {saved ? '已保存' : '保存配置'}

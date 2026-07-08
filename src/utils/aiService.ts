@@ -14,7 +14,7 @@ export interface CategorySuggestion {
 
 const DEFAULT_CONFIG: AIModelConfig = {
   name: 'qwen',
-  apiKey: 'sk-ws-H.EMLYLLM.qs74.MEUCIQCtaiRZZIjsg-3c8RyGytu3PGs_Ou-b3GGXku67ReEy7wIgFrB8pOyLWMHJyiYRZlrdy8uoP-gdQHdJKqvbB5U07_8',
+  apiKey: '',
   baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   model: 'qwen-turbo',
 };
