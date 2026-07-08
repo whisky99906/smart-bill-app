@@ -66,7 +66,7 @@ export const Settings = () => {
               </div>
               <div>
                 <label className="text-text-secondary text-sm mb-2 block">当前模型</label>
-                <p className="text-text-primary text-sm bg-gray-100 rounded-xl px-3 py-2">豆包 3.0</p>
+                <p className="text-text-primary text-sm bg-gray-100 rounded-xl px-3 py-2">Qwen-turbo (通义千问)</p>
               </div>
               <ClayButton className="w-full" onClick={handleSaveAIConfig}>
                 {saved ? <Check size={18} className="mr-2" /> : null}

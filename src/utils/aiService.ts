@@ -13,10 +13,10 @@ export interface CategorySuggestion {
 }
 
 const DEFAULT_CONFIG: AIModelConfig = {
-  name: 'doubao',
+  name: 'qwen',
   apiKey: '',
-  baseUrl: 'https://api.doubao.com/v1',
-  model: 'doubao-3',
+  baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  model: 'qwen-turbo',
 };
 
 let currentConfig = { ...DEFAULT_CONFIG };
