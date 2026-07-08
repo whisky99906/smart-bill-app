@@ -77,7 +77,7 @@ const smartCategoryKeywords: Record<string, { l1: string; l2: string }[]> = {
 };
 
 const detectBillType = (jsonData: ParsedRow[]): 'wechat' | 'alipay' | 'unknown' => {
-  const firstFewRows = jsonData.slice(0, 15).map(row => JSON.stringify(row)).join('');
+  const firstFewRows = jsonData.slice(0, 20).map(row => JSON.stringify(row)).join('');
   if (wechatKeywords.some(k => firstFewRows.includes(k))) return 'wechat';
   if (alipayKeywords.some(k => firstFewRows.includes(k))) return 'alipay';
   return 'unknown';
@@ -86,34 +86,144 @@ const detectBillType = (jsonData: ParsedRow[]): 'wechat' | 'alipay' | 'unknown' 
 const parseWechatBill = (jsonData: ParsedRow[]): ParsedRow[] => {
   const data: ParsedRow[] = [];
   let headerRow = -1;
+  const fieldKeys: Record<string, string> = {};
   
   for (let i = 0; i < jsonData.length; i++) {
     const row = jsonData[i];
-    const keys = Object.keys(row);
+    const rowStr = JSON.stringify(row);
     
-    if (keys.some(k => row[k] === '交易时间')) {
+    if (rowStr.includes('交易时间') && rowStr.includes('收/支') && rowStr.includes('金额')) {
       headerRow = i;
+      
+      for (const key of Object.keys(row)) {
+        const value = String(row[key] || '');
+        if (value.includes('交易时间')) fieldKeys.date = key;
+        else if (value.includes('交易类型')) fieldKeys.type = key;
+        else if (value.includes('交易对方')) fieldKeys.merchant = key;
+        else if (value.includes('商品')) fieldKeys.note = key;
+        else if (value.includes('收/支')) fieldKeys.incomeExpense = key;
+        else if (value.includes('金额')) fieldKeys.amount = key;
+        else if (value.includes('备注')) fieldKeys.comment = key;
+      }
       continue;
     }
     
     if (headerRow >= 0 && i > headerRow) {
-      const dateValue = row[keys[0]];
+      const dateValue = row[fieldKeys.date];
       const dateStr = typeof dateValue === 'number' 
         ? formatExcelDate(dateValue) 
         : String(dateValue || '');
       
+      const amountValue = row[fieldKeys.amount];
+      
       data.push({
         date: dateStr,
-        type: String(row[keys[3]] || ''),
-        merchant: String(row[keys[2]] || ''),
-        note: String(row[keys[1]] || '') + ' ' + String(row[keys[9]] || ''),
-        amount: String(row[keys[4]] || ''),
-        incomeExpense: String(row[keys[3]] || ''),
+        type: String(row[fieldKeys.incomeExpense] || ''),
+        merchant: String(row[fieldKeys.merchant] || ''),
+        note: String(row[fieldKeys.note] || '') + ' ' + String(row[fieldKeys.comment] || ''),
+        amount: amountValue,
+        category: String(row[fieldKeys.type] || ''),
+        incomeExpense: String(row[fieldKeys.incomeExpense] || ''),
       });
     }
   }
   
   return data;
+};
+
+const parseAlipayCSV = (fileContent: string): ParsedRow[] => {
+  const data: ParsedRow[] = [];
+  const lines = fileContent.split('\n').filter(line => line.trim());
+  
+  let headerRow = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.startsWith('交易时间,交易分类') || 
+        line.startsWith('交易时间') && line.includes('交易分类') && line.includes('交易对方')) {
+      headerRow = i;
+      break;
+    }
+  }
+  
+  if (headerRow === -1) {
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('交易时间') && lines[i].includes('金额')) {
+        headerRow = i;
+        break;
+      }
+    }
+  }
+  
+  if (headerRow === -1) return data;
+  
+  const headers = parseCSVLine(lines[headerRow]);
+  const dateIndex = headers.findIndex(h => h.includes('交易时间') || h.includes('日期'));
+  const categoryIndex = headers.findIndex(h => h.includes('交易分类') || h.includes('分类'));
+  const merchantIndex = headers.findIndex(h => h.includes('交易对方') || h.includes('对方') || h.includes('商户') || h.includes('商家'));
+  const noteIndex = headers.findIndex(h => h.includes('商品说明') || h.includes('商品') || h.includes('备注') || h.includes('摘要'));
+  const typeIndex = headers.findIndex(h => h.includes('收/支') || h.includes('收支'));
+  const amountIndex = headers.findIndex(h => h.includes('金额'));
+  
+  const minValidIndex = Math.min(dateIndex, categoryIndex, merchantIndex, noteIndex, typeIndex, amountIndex);
+  if (minValidIndex < 0) return data;
+  
+  for (let i = headerRow + 1; i < lines.length; i++) {
+    const line = lines[i];
+    const values = parseCSVLine(line);
+    
+    if (values.length < Math.max(dateIndex, categoryIndex, merchantIndex, noteIndex, typeIndex, amountIndex) + 1) {
+      continue;
+    }
+    
+    const dateValue = String(values[dateIndex] || '');
+    if (!dateValue || !dateValue.match(/\d{4}[-/年]/)) {
+      continue;
+    }
+    
+    const amountValue = String(values[amountIndex] || '');
+    if (!amountValue || !amountValue.match(/[\d.]+/)) {
+      continue;
+    }
+    
+    data.push({
+      date: dateValue,
+      type: String(values[typeIndex] || ''),
+      merchant: String(values[merchantIndex] || ''),
+      note: String(values[noteIndex] || ''),
+      amount: amountValue,
+      category: String(values[categoryIndex] || ''),
+      incomeExpense: String(values[typeIndex] || ''),
+    });
+  }
+  
+  return data;
+};
+
+const parseCSVLine = (line: string): string[] => {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  result.push(current);
+  return result;
 };
 
 const parseAlipayBill = (jsonData: ParsedRow[]): ParsedRow[] => {
@@ -124,7 +234,7 @@ const parseAlipayBill = (jsonData: ParsedRow[]): ParsedRow[] => {
     const row = jsonData[i];
     const keys = Object.keys(row);
     
-    if (keys.some(k => String(row[k]).includes('交易时间'))) {
+    if (keys.some(k => String(row[k]).includes('交易时间')) && keys.some(k => String(row[k]).includes('交易分类'))) {
       headerRow = i;
       continue;
     }
@@ -135,13 +245,15 @@ const parseAlipayBill = (jsonData: ParsedRow[]): ParsedRow[] => {
       let typeKey = '';
       let merchantKey = '';
       let noteKey = '';
+      let categoryKey = '';
       
       for (const key of keys) {
         if (key.includes('时间') || key.includes('日期')) dateKey = key;
         if (key.includes('金额') || key.includes('收支')) amountKey = key;
-        if (key.includes('类型') || key.includes('收/支')) typeKey = key;
-        if (key.includes('名称') || key.includes('商家') || key.includes('商户')) merchantKey = key;
+        if (key.includes('收/支') || key.includes('收支')) typeKey = key;
+        if (key.includes('对方') || key.includes('商家') || key.includes('商户')) merchantKey = key;
         if (key.includes('备注') || key.includes('商品') || key.includes('摘要')) noteKey = key;
+        if (key.includes('分类')) categoryKey = key;
       }
       
       data.push({
@@ -149,7 +261,8 @@ const parseAlipayBill = (jsonData: ParsedRow[]): ParsedRow[] => {
         type: String(row[typeKey] || ''),
         merchant: String(row[merchantKey] || ''),
         note: String(row[noteKey] || ''),
-        amount: String(row[amountKey] || ''),
+        amount: row[amountKey],
+        category: String(row[categoryKey] || ''),
         incomeExpense: String(row[typeKey] || ''),
       });
     }
@@ -202,8 +315,31 @@ export const ExcelImport = () => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
+    const fileName = selectedFile.name.toLowerCase();
     const reader = new FileReader();
     reader.onload = (event) => {
+      
+      if (fileName.endsWith('.csv')) {
+        const content = event.target?.result as string;
+        const parsedData = parseAlipayCSV(content);
+        
+        if (parsedData.length > 0) {
+          setHeaders(Object.keys(parsedData[0]));
+          setRows(parsedData.slice(0, 50));
+          setFullRows(parsedData);
+          
+          setFieldMapping({
+            date: 'date',
+            amount: 'amount',
+            merchant: 'merchant',
+            type: 'type',
+            note: 'note',
+          });
+          handleNextStep(parsedData);
+        }
+        return;
+      }
+
       const data = new Uint8Array(event.target?.result as ArrayBuffer);
       const workbook = XLSX.read(data, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
@@ -237,7 +373,12 @@ export const ExcelImport = () => {
         }
       }
     };
-    reader.readAsArrayBuffer(selectedFile);
+    
+    if (fileName.toLowerCase().endsWith('.csv')) {
+      reader.readAsText(selectedFile, 'GBK');
+    } else {
+      reader.readAsArrayBuffer(selectedFile);
+    }
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -245,8 +386,31 @@ export const ExcelImport = () => {
     const droppedFile = e.dataTransfer.files?.[0];
     if (!droppedFile) return;
 
+    const fileName = droppedFile.name.toLowerCase();
     const reader = new FileReader();
     reader.onload = (event) => {
+      
+      if (fileName.endsWith('.csv')) {
+        const content = event.target?.result as string;
+        const parsedData = parseAlipayCSV(content);
+        
+        if (parsedData.length > 0) {
+          setHeaders(Object.keys(parsedData[0]));
+          setRows(parsedData.slice(0, 50));
+          setFullRows(parsedData);
+          
+          setFieldMapping({
+            date: 'date',
+            amount: 'amount',
+            merchant: 'merchant',
+            type: 'type',
+            note: 'note',
+          });
+          handleNextStep(parsedData);
+        }
+        return;
+      }
+
       const data = new Uint8Array(event.target?.result as ArrayBuffer);
       const workbook = XLSX.read(data, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
@@ -280,7 +444,12 @@ export const ExcelImport = () => {
         }
       }
     };
-    reader.readAsArrayBuffer(droppedFile);
+    
+    if (fileName.toLowerCase().endsWith('.csv')) {
+      reader.readAsText(droppedFile, 'GBK');
+    } else {
+      reader.readAsArrayBuffer(droppedFile);
+    }
   }, []);
 
   const handleFieldChange = (header: string, field: FieldType) => {
@@ -289,13 +458,20 @@ export const ExcelImport = () => {
 
   const handleNextStep = (data?: ParsedRow[]) => {
     const rowsToProcess = data || fullRows;
+    const currentHeaders = data ? Object.keys(data[0]) : headers;
     
     const mappedRows: ImportRow[] = rowsToProcess.map((row) => {
-      const date = String(row[headers.find(h => fieldMapping[h] === 'date') || ''] || '');
-      const amount = row[headers.find(h => fieldMapping[h] === 'amount') || ''] || '';
-      const merchant = String(row[headers.find(h => fieldMapping[h] === 'merchant') || ''] || '');
-      const type = String(row[headers.find(h => fieldMapping[h] === 'type') || ''] || '');
-      const note = String(row[headers.find(h => fieldMapping[h] === 'note') || ''] || '');
+      const dateKey = currentHeaders.find(h => fieldMapping[h] === 'date' || h === 'date') || 'date';
+      const amountKey = currentHeaders.find(h => fieldMapping[h] === 'amount' || h === 'amount') || 'amount';
+      const merchantKey = currentHeaders.find(h => fieldMapping[h] === 'merchant' || h === 'merchant') || 'merchant';
+      const typeKey = currentHeaders.find(h => fieldMapping[h] === 'type' || h === 'type') || 'type';
+      const noteKey = currentHeaders.find(h => fieldMapping[h] === 'note' || h === 'note') || 'note';
+      
+      const date = String(row[dateKey] || '');
+      const amount = row[amountKey] || '';
+      const merchant = String(row[merchantKey] || '');
+      const type = String(row[typeKey] || '');
+      const note = String(row[noteKey] || '');
 
       const textToMatch = `${merchant} ${note} ${type}`;
       const incomeExpense = String(row['incomeExpense'] || type);
@@ -386,6 +562,18 @@ export const ExcelImport = () => {
     setImportRows(newRows);
   };
 
+  const handleMerchantChange = (rowIndex: number, value: string) => {
+    const newRows = [...importRows];
+    newRows[rowIndex].merchant = value.trim();
+    setImportRows(newRows);
+  };
+
+  const handleNoteChange = (rowIndex: number, value: string) => {
+    const newRows = [...importRows];
+    newRows[rowIndex].note = value.trim();
+    setImportRows(newRows);
+  };
+
   const handleBatchAutoMatch = () => {
     const newRows = importRows.map((row) => {
       if (row.categoryL1 && row.categoryL2) return row;
@@ -438,14 +626,20 @@ export const ExcelImport = () => {
         return;
       }
 
+      const parsedAmount = parseFloat(row.amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        failed++;
+        return;
+      }
+
       try {
         addTransaction({
           date: row.date,
-          amount: parseFloat(row.amount),
+          amount: parsedAmount,
           type: row.type || 'expense',
           categoryL1: row.categoryL1,
           categoryL2: row.categoryL2,
-          merchant: row.merchant,
+          merchant: row.merchant || '未知商户',
           note: row.note,
           source: 'excel',
         });
@@ -456,7 +650,8 @@ export const ExcelImport = () => {
         }
 
         success++;
-      } catch {
+      } catch (error) {
+        console.error('导入失败:', error);
         failed++;
       }
     });
@@ -616,11 +811,24 @@ export const ExcelImport = () => {
                 
                 return (
                   <ClayCard key={index} className="p-3 flex flex-wrap items-center gap-2 text-sm">
-                    <span className="text-text-tertiary w-14">{row.date}</span>
+                    <span className="text-text-tertiary w-16">{row.date}</span>
                     <span className={`font-bold w-20 text-right ${row.type === 'income' ? 'text-green-500' : 'text-red-400'}`}>
                       {row.type === 'income' ? '+' : '-'}¥{row.amount}
                     </span>
-                    <span className="text-text-primary flex-1 truncate">{row.merchant}</span>
+                    <input
+                      type="text"
+                      value={row.merchant}
+                      onChange={(e) => handleMerchantChange(index, e.target.value)}
+                      placeholder="商户名称"
+                      className="clay-input text-xs flex-1 min-w-[100px]"
+                    />
+                    <input
+                      type="text"
+                      value={row.note}
+                      onChange={(e) => handleNoteChange(index, e.target.value)}
+                      placeholder="备注"
+                      className="clay-input text-xs flex-1 min-w-[100px]"
+                    />
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-8 h-8 rounded-full flex items-center justify-center"

@@ -17,7 +17,7 @@ export const AddRecord = () => {
   const { matchMerchant, incrementUseCount, rules } = useMerchantRuleStore();
 
   const [amount, setAmount] = useState('');
-  const [type, setType] = useState<'expense' | 'income'>('expense');
+  const [type, setType] = useState<'expense' | 'income' | 'transfer' | 'borrow' | 'reimburse' | 'refund' | 'deposit'>('expense');
   const [categoryL1, setCategoryL1] = useState('');
   const [categoryL2, setCategoryL2] = useState('');
   const [merchant, setMerchant] = useState('');

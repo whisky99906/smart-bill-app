@@ -2,7 +2,7 @@ export interface Transaction {
   id: string;
   date: string;
   amount: number;
-  type: 'expense' | 'income';
+  type: 'expense' | 'income' | 'transfer' | 'borrow' | 'reimburse' | 'refund' | 'deposit';
   categoryL1: string;
   categoryL2: string;
   merchant: string;
@@ -18,7 +18,7 @@ export interface Category {
   icon: string;
   color: string;
   sortOrder: number;
-  type?: 'expense' | 'income';
+  type?: 'expense' | 'income' | 'transfer' | 'borrow' | 'reimburse' | 'refund' | 'deposit';
 }
 
 export interface MerchantRule {

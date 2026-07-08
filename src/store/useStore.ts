@@ -59,7 +59,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
       newTransaction.categoryL2 = matched.categoryL2;
     }
     set((state) => {
-      const updated = [...state.transactions, newTransaction];
+      const updated = [newTransaction, ...state.transactions];
       localStorage.setItem('transactions', JSON.stringify(updated));
       return { transactions: updated };
     });
