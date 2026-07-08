@@ -16,7 +16,7 @@ export const Profile = () => {
   const navigate = useNavigate();
   const { transactions } = useTransactionStore();
 
-  const daysCount = new Set(transactions.map(t => t.date.split('-').slice(0, 2).join('-'))).size;
+  const daysCount = new Set(transactions.map(t => t.date)).size;
 
   return (
     <div className="min-h-screen bg-clay-bg pb-20">

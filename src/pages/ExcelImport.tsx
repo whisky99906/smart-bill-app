@@ -33,6 +33,7 @@ export const ExcelImport = () => {
   const [step, setStep] = useState(1);
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<ParsedRow[]>([]);
+  const [fullRows, setFullRows] = useState<ParsedRow[]>([]);
   const [fieldMapping, setFieldMapping] = useState<Record<string, FieldType>>({});
   const [importRows, setImportRows] = useState<ImportRow[]>([]);
   const [importResult, setImportResult] = useState<{ success: number; failed: number } | null>(null);
@@ -52,6 +53,7 @@ export const ExcelImport = () => {
       if (jsonData.length > 0) {
         setHeaders(Object.keys(jsonData[0]));
         setRows(jsonData.slice(0, 50));
+        setFullRows(jsonData);
         setStep(2);
       }
     };
@@ -74,6 +76,7 @@ export const ExcelImport = () => {
       if (jsonData.length > 0) {
         setHeaders(Object.keys(jsonData[0]));
         setRows(jsonData.slice(0, 50));
+        setFullRows(jsonData);
         setStep(2);
       }
     };
@@ -85,7 +88,7 @@ export const ExcelImport = () => {
   };
 
   const handleNextStep = () => {
-    const mappedRows: ImportRow[] = rows.map((row) => {
+    const mappedRows: ImportRow[] = fullRows.map((row) => {
       const date = row[headers.find(h => fieldMapping[h] === 'date') || ''] || '';
       const amount = row[headers.find(h => fieldMapping[h] === 'amount') || ''] || '';
       const merchant = row[headers.find(h => fieldMapping[h] === 'merchant') || ''] || '';

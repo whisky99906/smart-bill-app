@@ -8,7 +8,7 @@ interface ClayButtonProps {
 
 export const ClayButton = ({ children, className = '', onClick, variant = 'primary', disabled = false }: ClayButtonProps) => {
   const variantStyles = {
-    primary: 'bg-clay-purple text-white',
+    primary: 'bg-clay-primary text-white',
     secondary: 'bg-clay-bg text-text-primary',
     warning: 'bg-clay-yellow text-text-primary',
     success: 'bg-clay-cyan text-text-primary',

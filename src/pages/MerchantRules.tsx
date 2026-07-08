@@ -19,6 +19,7 @@ export const MerchantRules = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingRule, setEditingRule] = useState<string | null>(null);
+  const [deleteRuleId, setDeleteRuleId] = useState<string | null>(null);
   const [newRule, setNewRule] = useState({
     merchantName: '',
     categoryL1: '',
@@ -63,8 +64,13 @@ export const MerchantRules = () => {
   };
 
   const handleDelete = (ruleId: string) => {
-    if (confirm('确定要删除这个规则吗？')) {
-      deleteRule(ruleId);
+    setDeleteRuleId(ruleId);
+  };
+
+  const confirmDelete = () => {
+    if (deleteRuleId) {
+      deleteRule(deleteRuleId);
+      setDeleteRuleId(null);
     }
   };
 
@@ -154,6 +160,22 @@ export const MerchantRules = () => {
           </div>
         )}
       </div>
+
+      <ClayModal 
+        isOpen={!!deleteRuleId} 
+        onClose={() => setDeleteRuleId(null)}
+        title="确认删除"
+      >
+        <p className="text-text-secondary mb-4">确定要删除这个商户规则吗？</p>
+        <div className="flex gap-4">
+          <ClayButton className="flex-1" variant="secondary" onClick={() => setDeleteRuleId(null)}>
+            取消
+          </ClayButton>
+          <ClayButton className="flex-1" variant="warning" onClick={confirmDelete}>
+            删除
+          </ClayButton>
+        </div>
+      </ClayModal>
 
       <ClayModal 
         isOpen={showModal} 

@@ -18,6 +18,7 @@ export interface Category {
   icon: string;
   color: string;
   sortOrder: number;
+  type?: 'expense' | 'income';
 }
 
 export interface MerchantRule {

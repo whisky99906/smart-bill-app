@@ -46,8 +46,10 @@ export const BottomNav = () => {
             <button
               key={item.id}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center justify-center w-16 h-full transition-all duration-200 ${
-                activeItem === item.id ? 'text-clay-primary' : 'text-text-tertiary'
+              className={`flex flex-col items-center justify-center w-14 h-12 rounded-xl transition-all duration-200 ${
+                activeItem === item.id 
+                  ? 'bg-white text-clay-primary shadow-[inset_3px_3px_6px_rgba(0,0,0,0.1),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] scale-105 font-bold' 
+                  : 'text-text-tertiary hover:bg-white/50'
               }`}
             >
               <item.Icon size={22} className="mb-1" />

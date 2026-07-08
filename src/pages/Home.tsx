@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { ClayCard, ClayButton } from '@/components';
-import { useTransactionStore, useCategoryStore } from '@/store/useStore';
+import { useTransactionStore, useCategoryStore, useBudgetStore } from '@/store/useStore';
 import { getIcon } from '@/utils/icons';
 import { Settings, PenTool, Mic, Upload, FolderOpen, FileText } from 'lucide-react';
 
@@ -11,9 +11,10 @@ export const Home = () => {
   const navigate = useNavigate();
   const { transactions, getTotalExpense } = useTransactionStore();
   const getCategoryById = useCategoryStore((state) => state.getCategoryById);
+  const getBudget = useBudgetStore((state) => state.getBudget);
 
   const totalExpense = getTotalExpense(currentMonth);
-  const budget = 3000;
+  const budget = getBudget(currentMonth).amount;
   const usedPercent = Math.min((totalExpense / budget) * 100, 100);
 
   const recentTransactions = transactions.slice(0, 8);

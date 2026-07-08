@@ -72,13 +72,12 @@ export const AddRecord = () => {
       merchant,
       note,
       date,
-      source: 'manual' as const,
     };
 
     if (editId) {
       updateTransaction(editId, transactionData);
     } else {
-      addTransaction(transactionData);
+      addTransaction({ ...transactionData, source: 'manual' as const });
       const matchedRule = rules.find(r => merchant.includes(r.merchantName));
       if (matchedRule) {
         incrementUseCount(matchedRule.id);
@@ -95,8 +94,9 @@ export const AddRecord = () => {
     }
   };
 
-  const mainCategories = getMainCategories();
-  const subCategories = categoryL1 ? getSubCategories(categoryL1) : [];
+  const allCategories = getMainCategories();
+  const mainCategories = allCategories.filter(c => c.type === type || !c.type);
+  const subCategories = categoryL1 ? getSubCategories(categoryL1).filter(c => c.type === type || !c.type) : [];
 
   return (
     <div className="min-h-screen bg-clay-bg pb-20">

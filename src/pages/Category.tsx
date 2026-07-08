@@ -20,6 +20,7 @@ export const Category = () => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
   const [newCategory, setNewCategory] = useState({
     name: '',
     icon: iconKeys[0],
@@ -70,8 +71,13 @@ export const Category = () => {
   };
 
   const handleDelete = (categoryId: string) => {
-    if (confirm('确定要删除这个分类吗？')) {
-      deleteCategory(categoryId);
+    setDeleteCategoryId(categoryId);
+  };
+
+  const confirmDelete = () => {
+    if (deleteCategoryId) {
+      deleteCategory(deleteCategoryId);
+      setDeleteCategoryId(null);
     }
   };
 
@@ -199,6 +205,22 @@ export const Category = () => {
           })}
         </div>
       </div>
+
+      <ClayModal 
+        isOpen={!!deleteCategoryId} 
+        onClose={() => setDeleteCategoryId(null)}
+        title="确认删除"
+      >
+        <p className="text-text-secondary mb-4">确定要删除这个分类吗？删除后无法恢复。</p>
+        <div className="flex gap-4">
+          <ClayButton className="flex-1" variant="secondary" onClick={() => setDeleteCategoryId(null)}>
+            取消
+          </ClayButton>
+          <ClayButton className="flex-1" variant="warning" onClick={confirmDelete}>
+            删除
+          </ClayButton>
+        </div>
+      </ClayModal>
 
       <ClayModal 
         isOpen={showModal} 

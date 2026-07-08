@@ -31,6 +31,18 @@ interface MerchantRuleStore {
   incrementUseCount: (ruleId: string) => void;
 }
 
+interface BudgetSettings {
+  amount: number;
+  reminderEnabled: boolean;
+  reminderThreshold: number;
+}
+
+interface BudgetStore {
+  budgets: Record<string, BudgetSettings>;
+  getBudget: (month: string) => BudgetSettings;
+  setBudget: (month: string, settings: BudgetSettings) => void;
+}
+
 export const useTransactionStore = create<TransactionStore>((set, get) => ({
   transactions: getAllTransactions(),
 
@@ -179,6 +191,37 @@ export const useMerchantRuleStore = create<MerchantRuleStore>((set, get) => ({
       );
       localStorage.setItem('merchantRules', JSON.stringify(updated));
       return { rules: updated };
+    });
+  },
+}));
+
+const DEFAULT_BUDGET: BudgetSettings = {
+  amount: 3000,
+  reminderEnabled: false,
+  reminderThreshold: 80,
+};
+
+const loadBudgets = (): Record<string, BudgetSettings> => {
+  try {
+    const data = localStorage.getItem('budgets');
+    return data ? JSON.parse(data) : {};
+  } catch {
+    return {};
+  }
+};
+
+export const useBudgetStore = create<BudgetStore>((set, get) => ({
+  budgets: loadBudgets(),
+
+  getBudget: (month) => {
+    return get().budgets[month] || DEFAULT_BUDGET;
+  },
+
+  setBudget: (month, settings) => {
+    set((state) => {
+      const updated = { ...state.budgets, [month]: settings };
+      localStorage.setItem('budgets', JSON.stringify(updated));
+      return { budgets: updated };
     });
   },
 }));
