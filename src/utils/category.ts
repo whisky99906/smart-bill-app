@@ -256,22 +256,124 @@ export const defaultMerchantRules: MerchantRule[] = [
 ];
 
 export const billCategoryMapping: Record<string, { categoryL1: string; categoryL2: string }> = {
+  // === 餐饮美食类 ===
   '餐饮美食': { categoryL1: 'food', categoryL2: 'food-dinner' },
   '食品饮料': { categoryL1: 'food', categoryL2: 'food-snack' },
-  '交通出行': { categoryL1: 'transport', categoryL2: 'transport-taxi' },
+  '饮食': { categoryL1: 'food', categoryL2: 'food-dinner' },
+  '甜品饮品': { categoryL1: 'food', categoryL2: 'food-snack' },
+  '外卖': { categoryL1: 'food', categoryL2: 'food-takeout' },
+  '早午晚餐': { categoryL1: 'food', categoryL2: 'food-dinner' },
+
+  // === 购物消费类 ===
   '购物消费': { categoryL1: 'shopping', categoryL2: 'shopping-daily' },
   '日用百货': { categoryL1: 'shopping', categoryL2: 'shopping-daily' },
+  '服饰装扮': { categoryL1: 'shopping', categoryL2: 'shopping-clothes' },
+  '服饰': { categoryL1: 'shopping', categoryL2: 'shopping-clothes' },
+  '服装': { categoryL1: 'shopping', categoryL2: 'shopping-clothes' },
+  '鞋包饰品': { categoryL1: 'shopping', categoryL2: 'shopping-clothes' },
+  '数码电器': { categoryL1: 'shopping', categoryL2: 'shopping-electronics' },
+  '数码': { categoryL1: 'shopping', categoryL2: 'shopping-electronics' },
+  '母婴用品': { categoryL1: 'shopping', categoryL2: 'shopping-baby' },
+  '超市便利': { categoryL1: 'shopping', categoryL2: 'shopping-daily' },
+  '便利店': { categoryL1: 'shopping', categoryL2: 'shopping-daily' },
+
+  // === 交通出行类 ===
+  '交通出行': { categoryL1: 'transport', categoryL2: 'transport-taxi' },
+  '出行': { categoryL1: 'transport', categoryL2: 'transport-taxi' },
+
+  // === 居家生活类 ===
   '居家生活': { categoryL1: 'accommodation', categoryL2: 'accommodation-rent' },
+  '家居家装': { categoryL1: 'accommodation', categoryL2: 'accommodation-rent' },
+  '家装建材': { categoryL1: 'accommodation', categoryL2: 'accommodation-rent' },
+  '物业': { categoryL1: 'accommodation', categoryL2: 'accommodation-property' },
+  '水电煤': { categoryL1: 'accommodation', categoryL2: 'accommodation-utility' },
+
+  // === 休闲娱乐类 ===
   '休闲娱乐': { categoryL1: 'social', categoryL2: 'social-entertainment' },
+  '电影演出': { categoryL1: 'social', categoryL2: 'social-entertainment' },
+  '游戏': { categoryL1: 'social', categoryL2: 'social-game' },
+  'KTV': { categoryL1: 'social', categoryL2: 'social-entertainment' },
+  '运动健身': { categoryL1: 'membership', categoryL2: 'membership-fitness' },
+
+  // === 医疗健康类 ===
   '医疗健康': { categoryL1: 'medical', categoryL2: 'medical-hospital' },
+  '医疗': { categoryL1: 'medical', categoryL2: 'medical-hospital' },
+  '健康': { categoryL1: 'medical', categoryL2: 'medical-checkup' },
+  '药店': { categoryL1: 'medical', categoryL2: 'medical-drug' },
+
+  // === 教育学习类 ===
   '教育学习': { categoryL1: 'study', categoryL2: 'study-course' },
-  '生活服务': { categoryL1: 'other-expense', categoryL2: 'other-expense' },
-  '转账红包': { categoryL1: 'social', categoryL2: 'social-gift' },
+  '教育': { categoryL1: 'study', categoryL2: 'study-course' },
+  '培训': { categoryL1: 'study', categoryL2: 'study-course' },
+  '书籍': { categoryL1: 'study', categoryL2: 'study-book' },
+  '文具': { categoryL1: 'study', categoryL2: 'study-stationery' },
+
+  // === 美容美发类 ===
+  '美容美发': { categoryL1: 'beauty', categoryL2: 'beauty-hair' },
+  '美妆': { categoryL1: 'beauty', categoryL2: 'beauty-skincare' },
+  '美发': { categoryL1: 'beauty', categoryL2: 'beauty-hair' },
+  '护肤': { categoryL1: 'beauty', categoryL2: 'beauty-skincare' },
+  '彩妆': { categoryL1: 'beauty', categoryL2: 'beauty-makeup' },
+
+  // === 充值缴费类 ===
   '充值缴费': { categoryL1: 'accommodation', categoryL2: 'accommodation-utility' },
+  '通讯': { categoryL1: 'accommodation', categoryL2: 'accommodation-utility' },
+  '话费': { categoryL1: 'accommodation', categoryL2: 'accommodation-utility' },
+  '宽带': { categoryL1: 'accommodation', categoryL2: 'accommodation-utility' },
+
+  // === 投资理财类 ===
   '金融理财': { categoryL1: 'investment', categoryL2: 'investment-fund' },
+  '投资理财': { categoryL1: 'investment', categoryL2: 'investment-fund' },
+  '理财': { categoryL1: 'investment', categoryL2: 'investment-fund' },
+  '保险': { categoryL1: 'investment', categoryL2: 'investment-fund' },
+  '基金': { categoryL1: 'investment', categoryL2: 'investment-fund' },
+  '股票': { categoryL1: 'investment', categoryL2: 'investment-stock' },
+
+  // === 转账红包类 ===
+  '转账红包': { categoryL1: 'social', categoryL2: 'social-gift' },
+  '红包': { categoryL1: 'social', categoryL2: 'social-gift' },
+  '转账': { categoryL1: 'social', categoryL2: 'social-gift' },
+
+  // === 公益类 ===
+  '公益': { categoryL1: 'other-expense', categoryL2: 'other-expense' },
+  '公益慈善': { categoryL1: 'other-expense', categoryL2: 'other-expense' },
+  '爱心捐赠': { categoryL1: 'other-expense', categoryL2: 'other-expense' },
+
+  // === 旅行类 ===
+  '旅游': { categoryL1: 'travel', categoryL2: 'travel-group' },
+  '旅行': { categoryL1: 'travel', categoryL2: 'travel-group' },
+  '酒店住宿': { categoryL1: 'accommodation', categoryL2: 'accommodation-hotel' },
+
+  // === 会员类 ===
+  '会员': { categoryL1: 'membership', categoryL2: 'membership-video' },
+  '视频娱乐': { categoryL1: 'membership', categoryL2: 'membership-video' },
+  '音乐': { categoryL1: 'membership', categoryL2: 'membership-music' },
+
+  // === 生活服务类 ===
+  '生活服务': { categoryL1: 'other-expense', categoryL2: 'other-expense' },
+  '快递物流': { categoryL1: 'shopping', categoryL2: 'shopping-daily' },
+  '快递': { categoryL1: 'shopping', categoryL2: 'shopping-daily' },
+
+  // === 退款类 ===
+  '退款': { categoryL1: 'refund', categoryL2: 'refund-product' },
+  '退票': { categoryL1: 'refund', categoryL2: 'refund-service' },
+
+  // === 工资收入类 ===
   '工资': { categoryL1: 'salary', categoryL2: 'salary-monthly' },
   '奖金': { categoryL1: 'salary', categoryL2: 'salary-bonus' },
+  '薪资': { categoryL1: 'salary', categoryL2: 'salary-monthly' },
+  '兼职': { categoryL1: 'part-time', categoryL2: 'part-time-gig' },
+  '利息': { categoryL1: 'investment', categoryL2: 'investment-deposit' },
+  '收益': { categoryL1: 'investment', categoryL2: 'investment-fund' },
+
+  // === 其他 ===
   '其他': { categoryL1: 'other-expense', categoryL2: 'other-expense' },
+  '其他消费': { categoryL1: 'other-expense', categoryL2: 'other-expense' },
+  '其他收入': { categoryL1: 'other-income', categoryL2: 'other-income' },
+  '快捷支付': { categoryL1: 'other-expense', categoryL2: 'other-expense' },
+  '代扣': { categoryL1: 'other-expense', categoryL2: 'other-expense' },
+  '商户服务': { categoryL1: 'other-expense', categoryL2: 'other-expense' },
+  '自动扣款': { categoryL1: 'other-expense', categoryL2: 'other-expense' },
 };
 
 export const defaultTransactions: Transaction[] = [

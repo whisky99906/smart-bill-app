@@ -20,10 +20,11 @@ interface ImportRow {
   date: string;
   amount: string;
   merchant: string;
-  type: 'expense' | 'income' | '';
+  type: 'expense' | 'income' | 'skip' | '';
   note: string;
   categoryL1: string;
   categoryL2: string;
+  skip: boolean; // Bug6/Bug10: 标记应跳过的记录（不计收支/零金额）
 }
 
 const wechatKeywords = ['微信支付', '微信昵称', '微信支付账单明细'];
@@ -279,8 +280,14 @@ const parseAlipayBill = (jsonData: ParsedRow[]): ParsedRow[] => {
 };
 
 const formatExcelDate = (excelDate: number): string => {
-  const date = new Date((excelDate - 25569) * 86400 * 1000);
-  return date.toISOString().split('T')[0];
+  // Bug8修复: Excel日期序列号表示的是本地日期，不是UTC时间戳
+  // 使用UTC方法提取日期组件，避免时区偏移导致日期差8小时
+  const utcMs = (excelDate - 25569) * 86400 * 1000;
+  const date = new Date(utcMs);
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 const smartMatchCategory = (text: string, type: 'expense' | 'income' | ''): { l1: string; l2: string } | null => {
@@ -315,7 +322,7 @@ export const ExcelImport = () => {
   const [fullRows, setFullRows] = useState<ParsedRow[]>([]);
   const [fieldMapping, setFieldMapping] = useState<Record<string, FieldType>>({});
   const [importRows, setImportRows] = useState<ImportRow[]>([]);
-  const [importResult, setImportResult] = useState<{ success: number; failed: number } | null>(null);
+  const [importResult, setImportResult] = useState<{ success: number; failed: number; skipped: number } | null>(null);
   const [isAiMatching, setIsAiMatching] = useState(false);
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -481,10 +488,35 @@ export const ExcelImport = () => {
       const note = String(row[noteKey] || '');
 
       const textToMatch = `${merchant} ${note} ${type}`;
-      const incomeExpense = String(row['incomeExpense'] || type);
-      const isIncome = incomeExpense.includes('收入') || incomeExpense.includes('+') || incomeExpense.includes('转入');
-      const isExpense = incomeExpense.includes('支出') || incomeExpense.includes('-') || incomeExpense.includes('转出');
-      const transactionType = isIncome ? 'income' : (isExpense ? 'expense' : '');
+      
+      // Bug11修复: 优先使用账单自带的"收/支"字段判断，金额正负作为兜底
+      // Bug6修复: 识别"不计收支"类型，跳过这些记录
+      const incomeExpense = String(row['incomeExpense'] || '').trim();
+      const typeField = String(type || '').trim();
+      
+      let transactionType: 'expense' | 'income' | 'skip' | '' = '';
+      
+      // 1. 先检查"不计收支"类型（转账、充值、提现等）
+      const skipKeywords = ['不计收支', '不计', '非收支'];
+      if (skipKeywords.some(k => incomeExpense.includes(k) || typeField.includes(k))) {
+        transactionType = 'skip';
+      }
+      // 2. 优先使用账单自带的"收/支"字段
+      else if (incomeExpense.includes('支出') || typeField.includes('支出')) {
+        transactionType = 'expense';
+      }
+      else if (incomeExpense.includes('收入') || typeField.includes('收入')) {
+        transactionType = 'income';
+      }
+      // 3. 兜底：通过金额正负判断（适用于通用Excel文件）
+      else {
+        const amountNum = parseFloat(String(amount).replace(/[,/s¥¥￥$]/g, ''));
+        if (!isNaN(amountNum) && amountNum !== 0) {
+          // 通用Excel: 负数=支出, 正数=收入(但中国账单中正数通常也是支出)
+          // 由于没有收/支字段，默认视为支出，除非明确为负数
+          transactionType = amountNum < 0 ? 'income' : 'expense';
+        }
+      }
 
       let categoryL1 = '';
       let categoryL2 = '';
@@ -495,7 +527,8 @@ export const ExcelImport = () => {
         categoryL1 = mappedFromBill.categoryL1;
         categoryL2 = mappedFromBill.categoryL2;
       } else {
-        const smartMatch = smartMatchCategory(textToMatch, transactionType);
+        const matchTypeForSmart = transactionType === 'skip' ? '' : transactionType === 'income' ? 'income' : transactionType === 'expense' ? 'expense' : '';
+        const smartMatch = smartMatchCategory(textToMatch, matchTypeForSmart);
         if (smartMatch) {
           categoryL1 = smartMatch.l1;
           categoryL2 = smartMatch.l2;
@@ -510,39 +543,71 @@ export const ExcelImport = () => {
       }
 
       if (!categoryL1) {
-        categoryL1 = transactionType === 'income' ? 'other-income' : 'other-expense';
-        categoryL2 = transactionType === 'income' ? 'other-income' : 'other-expense';
+        if (transactionType === 'income') {
+          categoryL1 = 'other-income';
+          categoryL2 = 'other-income';
+        } else if (transactionType === 'skip') {
+          // Bug6: 不计收支记录不分配分类
+          categoryL1 = '';
+          categoryL2 = '';
+        } else {
+          categoryL1 = 'other-expense';
+          categoryL2 = 'other-expense';
+        }
       }
 
       const normalizedMerchant = normalizeMerchant(merchant);
+      const formattedAmount = formatAmount(amount);
+
+      // Bug6: 不计收支标记为skip; Bug10: 金额为0标记为skip
+      const isSkip = transactionType === 'skip' || formattedAmount === '0' || formattedAmount === '';
 
       return {
         original: row,
         date: formatDate(String(date)),
-        amount: formatAmount(amount),
+        amount: formattedAmount,
         merchant: normalizedMerchant,
-        type: transactionType,
+        type: transactionType === 'skip' ? 'skip' : transactionType,
         note,
         categoryL1,
         categoryL2,
+        skip: isSkip,
       };
     });
 
+    // Bug9修复: 预览数据使用独立副本，包含所有行（skip行标记但不删除，方便用户查看）
     setImportRows(mappedRows);
     setStep(3);
   };
 
   const formatDate = (dateStr: string): string => {
-    if (!dateStr) return new Date().toISOString().split('T')[0];
-    const date = new Date(dateStr);
-    if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0];
-    }
+    // Bug8修复: 优先直接从字符串提取日期组件，避免Date解析的时区问题
+    // new Date()在不同环境下对非ISO格式日期的解析行为不一致（有的当UTC，有的当本地时间）
+    
+    // 辅助函数：用本地时间生成今日日期字符串
+    const todayLocal = () => {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    };
+    
+    if (!dateStr) return todayLocal();
+    
+    // 优先用正则直接提取年月日，完全绕过Date解析的时区问题
     const match = dateStr.match(/(\d{4})[-/年](\d{1,2})[-/月](\d{1,2})/);
     if (match) {
       return `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`;
     }
-    return new Date().toISOString().split('T')[0];
+    
+    // 兜底：用Date解析，但使用本地时间方法避免时区偏移
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    return todayLocal();
   };
 
   const formatAmount = (amountVal: string | number): string => {
@@ -566,6 +631,13 @@ export const ExcelImport = () => {
     } else {
       newRows[rowIndex].categoryL2 = value;
     }
+    // 用户手动选择分类，取消skip标记
+    if (newRows[rowIndex].skip && value) {
+      newRows[rowIndex].skip = false;
+      if (newRows[rowIndex].type === 'skip') {
+        newRows[rowIndex].type = 'expense';
+      }
+    }
     setImportRows(newRows);
   };
 
@@ -583,10 +655,12 @@ export const ExcelImport = () => {
 
   const handleBatchAutoMatch = () => {
     const newRows = importRows.map((row) => {
-      if (row.categoryL1 && row.categoryL2) return row;
+      // 跳过已分类和skip记录
+      if ((row.categoryL1 && row.categoryL2) || row.skip) return row;
       
       const textToMatch = `${row.merchant} ${row.note}`;
-      const smartMatch = smartMatchCategory(textToMatch, row.type);
+      const matchType = row.type === 'skip' ? '' : row.type === 'income' ? 'income' : row.type === 'expense' ? 'expense' : '';
+      const smartMatch = smartMatchCategory(textToMatch, matchType);
       if (smartMatch) {
         return { ...row, categoryL1: smartMatch.l1, categoryL2: smartMatch.l2 };
       }
@@ -598,17 +672,33 @@ export const ExcelImport = () => {
   const handleAIMatch = async () => {
     setIsAiMatching(true);
     
-    const uncategorizedRows = importRows.map((row, index) => ({
-      index,
-      merchant: row.merchant,
-      note: row.note,
-      type: row.type,
-    })).filter(row => !row.merchant || !row.note || (!row.type && (!row.merchant.includes('收入') && !row.merchant.includes('支出'))));
+    // Bug5修复: 筛选"需要分类但尚未分类"的记录（主要是支出记录）
+    // 之前的逻辑写反了，现在正确筛选：有商户信息 + 类型为支出 + 尚未分类
+    const uncategorizedRows = importRows
+      .map((row, index) => ({ index, row }))
+      .filter(({ row }) => {
+        // 跳过已标记为skip的记录
+        if (row.type === 'skip') return false;
+        // 跳过已有分类的记录
+        if (row.categoryL1 && row.categoryL2) return false;
+        // 优先处理支出记录，但也包括未分类的收入记录
+        if (row.type === 'expense' || row.type === 'income') return true;
+        // 类型为空但有商户信息的，也尝试分类
+        if (!row.type && (row.merchant || row.note)) return true;
+        return false;
+      })
+      .map(({ index, row }) => ({
+        index,
+        merchant: row.merchant,
+        note: row.note,
+        type: row.type,
+      }));
 
     const newRows = [...importRows];
     
     for (const { index, merchant, note, type } of uncategorizedRows) {
-      const suggestion = await suggestCategory(merchant, note, type);
+      const aiType = type === 'skip' ? '' : type === 'income' ? 'income' : type === 'expense' ? 'expense' : '';
+      const suggestion = await suggestCategory(merchant, note, aiType || 'expense');
       if (suggestion && suggestion.confidence > 0.6) {
         newRows[index] = {
           ...newRows[index],
@@ -623,11 +713,22 @@ export const ExcelImport = () => {
   };
 
   const handleImport = () => {
+    // Bug9修复: 基于当前importRows创建深拷贝作为导入数据，与预览状态分离
+    const rowsToImport = importRows.map(row => ({ ...row }));
+    
     let success = 0;
     let failed = 0;
+    let skipped = 0;
     const newlyMatchedRuleIds = new Set<string>();
 
-    importRows.forEach((row) => {
+    rowsToImport.forEach((row) => {
+      // Bug6: 跳过"不计收支"记录
+      // Bug10: 跳过金额为0的记录
+      if (row.skip || row.type === 'skip') {
+        skipped++;
+        return;
+      }
+
       if (!row.date || row.amount === '' || !row.categoryL1 || !row.categoryL2) {
         failed++;
         return;
@@ -643,7 +744,7 @@ export const ExcelImport = () => {
         addTransaction({
           date: row.date,
           amount: parsedAmount,
-          type: row.type || 'expense',
+          type: (row.type === 'income' ? 'income' : 'expense') as 'expense' | 'income',
           categoryL1: row.categoryL1,
           categoryL2: row.categoryL2,
           merchant: row.merchant || '未知商户',
@@ -665,7 +766,7 @@ export const ExcelImport = () => {
 
     newlyMatchedRuleIds.forEach(id => incrementUseCount(id));
 
-    setImportResult({ success, failed });
+    setImportResult({ success, failed, skipped });
     setStep(4);
   };
 
@@ -673,6 +774,7 @@ export const ExcelImport = () => {
     setStep(1);
     setHeaders([]);
     setRows([]);
+    setFullRows([]);
     setFieldMapping({});
     setImportRows([]);
     setImportResult(null);
@@ -795,7 +897,8 @@ export const ExcelImport = () => {
           <div>
             <div className="flex items-center justify-between mb-4">
               <p className="text-text-secondary text-sm">
-                共 {importRows.length} 条，已智能分类 {importRows.filter(r => r.categoryL1 && r.categoryL2).length} 条
+                共 {importRows.length} 条，已分类 {importRows.filter(r => r.categoryL1 && r.categoryL2 && !r.skip).length} 条
+                {importRows.filter(r => r.skip).length > 0 && <span className="text-text-tertiary">，跳过 {importRows.filter(r => r.skip).length} 条（不计收支/零金额）</span>}
               </p>
               <div className="flex gap-2">
                 <ClayButton className="px-4 py-2 text-sm" variant="secondary" onClick={handleBatchAutoMatch}>
@@ -817,10 +920,10 @@ export const ExcelImport = () => {
                 const MainIcon = getIcon(mainCategory?.icon || 'other');
                 
                 return (
-                  <ClayCard key={index} className="p-3 flex flex-wrap items-center gap-2 text-sm">
+                  <ClayCard key={index} className={`p-3 flex flex-wrap items-center gap-2 text-sm ${row.skip ? 'opacity-40' : ''}`}>
                     <span className="text-text-tertiary w-16">{row.date}</span>
-                    <span className={`font-bold w-20 text-right ${row.type === 'income' ? 'text-green-500' : 'text-red-400'}`}>
-                      {row.type === 'income' ? '+' : '-'}¥{row.amount}
+                    <span className={`font-bold w-20 text-right ${row.skip ? 'text-text-tertiary' : row.type === 'income' ? 'text-green-500' : 'text-red-400'}`}>
+                      {row.skip ? '跳过' : row.type === 'income' ? '+' : '-'}¥{row.amount}
                     </span>
                     <input
                       type="text"
@@ -887,6 +990,11 @@ export const ExcelImport = () => {
             {importResult.failed > 0 && (
               <p className="text-red-400 mb-6">
                 有 {importResult.failed} 条导入失败
+              </p>
+            )}
+            {importResult.skipped > 0 && (
+              <p className="text-text-tertiary mb-6">
+                跳过 {importResult.skipped} 条不计收支/零金额记录
               </p>
             )}
             <div className="flex gap-4 justify-center">
