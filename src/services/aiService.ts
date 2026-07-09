@@ -185,8 +185,8 @@ const classifySingle = async (
 const validateResult = (result: any): AiClassifyResult => {
   const validTypes = ['expense', 'income'];
   const validCategories = [
-    'food', 'shopping', 'transport', 'accommodation', 'study', 'social',
-    'beauty', 'travel', 'medical', 'membership', 'other-expense',
+    'food', 'shopping', 'transport', 'accommodation', 'daily', 'study', 'social',
+    'entertainment', 'beauty', 'travel', 'medical', 'membership', 'other-expense',
     'salary', 'investment', 'part-time', 'gift-income', 'other-income',
   ];
 
