@@ -927,13 +927,20 @@ export const ExcelImport = () => {
                     <span className={`font-bold w-20 text-right ${row.skip ? 'text-text-tertiary' : row.type === 'income' ? 'text-green-500' : 'text-red-400'}`}>
                       {row.skip ? '跳过' : row.type === 'income' ? '+' : '-'}¥{row.amount}
                     </span>
-                    <input
-                      type="text"
-                      value={row.merchant}
-                      onChange={(e) => handleMerchantChange(index, e.target.value)}
-                      placeholder="商户名称"
-                      className="clay-input text-xs flex-1 min-w-[100px]"
-                    />
+                    <div className="flex-1 min-w-[100px]">
+                      <input
+                        type="text"
+                        value={row.merchant}
+                        onChange={(e) => handleMerchantChange(index, e.target.value)}
+                        placeholder="商户名称"
+                        className="clay-input text-xs w-full"
+                      />
+                      {row.originalMerchant && row.originalMerchant !== row.merchant && (
+                        <span className="text-xs text-text-tertiary block truncate mt-0.5">
+                          原名：{row.originalMerchant}
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={row.note}

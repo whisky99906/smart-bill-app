@@ -501,15 +501,68 @@ export const normalizeMerchant = (raw: string): string => {
     name = parts[0];
   }
   
-  const orgPrefixPatterns = [
-    /^(.*?(大学|学院|公司|集团|银行|医院|学校|研究院|研究所|中心|局|部|厅|院|厂|店|社|馆|楼|室|站|场))\s*/,
-  ];
+  const orgSuffixes = ['大学', '学院', '公司', '集团', '银行', '医院', '学校', '研究院', '研究所', '中心', '局', '部', '厅', '院', '厂', '店', '社', '馆', '楼', '室', '站', '场'];
+  const locationPrefixes = ['校区', '分校', '分店', '分公司', '支行', '门市部', '首义', '南湖', '光谷', '洪山', '武昌', '汉口', '汉阳', '江岸', '江汉', '硚口', '东西湖', '黄陂', '新洲', '江夏', '蔡甸', '汉南'];
   
-  for (const pattern of orgPrefixPatterns) {
-    const match = name.match(pattern);
-    if (match && match[0].length < name.length) {
-      const remainder = name.substring(match[0].length).trim();
-      if (remainder.length > 0) {
+  const campusActionWords = new Set([
+    '接水', '饮水', '打水', '开水',
+    '打印', '复印', '打印复印',
+    '急诊', '门诊', '挂号', '就诊',
+    '借阅', '还书', '借书',
+    '洗浴', '洗衣', '洗澡',
+    '充值', '缴费',
+  ]);
+  
+  let changed = true;
+  let iterations = 0;
+  const maxIterations = 5;
+  
+  while (changed && iterations < maxIterations) {
+    changed = false;
+    iterations++;
+    
+    for (const suffix of orgSuffixes) {
+      const index = name.indexOf(suffix);
+      if (index >= 0) {
+        const remainder = name.substring(index + suffix.length).trim();
+        if (remainder.length > 0) {
+          const trimmedRemainder = remainder.replace(/^[\s一-十\d]+/, '').trim();
+          if (trimmedRemainder.length > 0) {
+            const isActionWord = campusActionWords.has(trimmedRemainder);
+            const isShortActionWord = trimmedRemainder.length <= 3 && 
+              campusActionWords.has(trimmedRemainder.substring(0, 2)) || 
+              campusActionWords.has(trimmedRemainder.substring(0, 3));
+            
+            if (!isActionWord && !isShortActionWord) {
+              name = trimmedRemainder;
+              changed = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    if (!changed) {
+      for (const prefix of locationPrefixes) {
+        const index = name.indexOf(prefix);
+        if (index >= 0) {
+          const remainder = name.substring(index + prefix.length).trim();
+          if (remainder.length > 0) {
+            name = remainder;
+            changed = true;
+            break;
+          }
+        }
+      }
+    }
+  }
+  
+  for (const actionWord of campusActionWords) {
+    if (name.includes(actionWord)) {
+      const index = name.indexOf(actionWord);
+      const remainder = name.substring(index).trim();
+      if (remainder.length <= 6) {
         name = remainder;
         break;
       }
