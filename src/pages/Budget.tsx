@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClayCard, ClayButton } from '@/components';
 import { useTransactionStore, useBudgetStore } from '@/store/useStore';
+import { checkBudgetAndNotify } from '@/services/notificationService';
 import { ArrowLeft, Check } from 'lucide-react';
 
 const today = new Date();
@@ -23,14 +24,26 @@ export const Budget = () => {
   const usedPercent = Math.min((totalExpense / budget) * 100, 100);
 
   const handleSave = () => {
+    const newBudget = parseFloat(budgetAmount) || 3000;
     setBudget(currentMonth, {
-      amount: parseFloat(budgetAmount) || 3000,
+      amount: newBudget,
       reminderEnabled,
       reminderThreshold,
     });
+    
+    if (reminderEnabled) {
+      checkBudgetAndNotify(totalExpense, newBudget, reminderThreshold);
+    }
+    
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
+
+  useEffect(() => {
+    if (reminderEnabled && budget > 0) {
+      checkBudgetAndNotify(totalExpense, budget, reminderThreshold);
+    }
+  }, [totalExpense, budget, reminderEnabled, reminderThreshold]);
 
   return (
     <div className="min-h-screen bg-clay-bg pb-20">

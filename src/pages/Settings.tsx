@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClayCard, ClayButton } from '@/components';
-import { setAIConfig, getAIConfig, type AIModelConfig } from '@/utils/aiService';
+import { setAiConfig, getAIConfig, type AIModelConfig } from '@/services/aiService';
+import { requestNotificationPermission, hasNotificationPermission, scheduleDailyReminder } from '@/services/notificationService';
 import { ArrowLeft, Shield, Bell, Database, Info, FileText, ChevronRight, Bot, Check } from 'lucide-react';
 
 const modelTemplates: Record<string, { baseUrl: string; model: string; name: string }> = {
@@ -39,7 +40,9 @@ const settingsItems = [
 export const Settings = () => {
   const navigate = useNavigate();
   const [showAIConfig, setShowAIConfig] = useState(false);
+  const [showNotificationConfig, setShowNotificationConfig] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [notificationGranted, setNotificationGranted] = useState(hasNotificationPermission());
   
   const [config, setConfig] = useState<AIModelConfig>(getAIConfig());
 
@@ -60,7 +63,7 @@ export const Settings = () => {
   };
 
   const handleSaveAIConfig = () => {
-    setAIConfig(config);
+    setAiConfig(config);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -150,6 +153,67 @@ export const Settings = () => {
                 {saved ? <Check size={18} className="mr-2" /> : null}
                 {saved ? '已保存' : '保存配置'}
               </ClayButton>
+            </div>
+          </ClayCard>
+        )}
+
+        <ClayCard 
+          className="p-4 flex items-center justify-between mb-6 cursor-pointer"
+          onClick={() => setShowNotificationConfig(!showNotificationConfig)}
+        >
+          <div className="flex items-center gap-3">
+            <Bell size={22} className="text-clay-primary" />
+            <span className="text-text-primary">推送通知</span>
+          </div>
+          <ChevronRight size={18} className={`text-text-tertiary transition-transform ${showNotificationConfig ? 'rotate-90' : ''}`} />
+        </ClayCard>
+
+        {showNotificationConfig && (
+          <ClayCard className="p-4 mb-6">
+            <p className="text-text-tertiary text-xs mb-4">管理推送通知设置</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-text-primary text-sm">允许推送通知</p>
+                  <p className="text-text-tertiary text-xs">接收记账提醒和预算预警</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    const permission = await requestNotificationPermission();
+                    if (permission === 'granted') {
+                      scheduleDailyReminder();
+                      setNotificationGranted(true);
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-xl text-sm transition-all ${
+                    notificationGranted 
+                      ? 'bg-green-100 text-green-600' 
+                      : 'bg-clay-primary text-white'
+                  }`}
+                >
+                  {notificationGranted ? '已开启' : '开启通知'}
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-text-primary text-sm">每日记账提醒</p>
+                  <p className="text-text-tertiary text-xs">每天晚上 8 点提醒记账</p>
+                </div>
+                <span className="text-xs text-text-tertiary">
+                  {notificationGranted ? '已启用' : '需要开启通知'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-text-primary text-sm">预算超支提醒</p>
+                  <p className="text-text-tertiary text-xs">支出超过预算时提醒</p>
+                </div>
+                <span className="text-xs text-text-tertiary">
+                  {notificationGranted ? '已启用' : '需要开启通知'}
+                </span>
+              </div>
             </div>
           </ClayCard>
         )}

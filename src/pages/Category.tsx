@@ -27,6 +27,7 @@ export const Category = () => {
     color: colorOptions[0],
     parentId: 'root',
     sortOrder: 0,
+    type: 'expense' as 'expense' | 'income',
   });
 
   const mainCategories = getMainCategories();
@@ -52,6 +53,7 @@ export const Category = () => {
       color: colorOptions[0],
       parentId: 'root',
       sortOrder: 0,
+      type: 'expense',
     });
   };
 
@@ -65,6 +67,7 @@ export const Category = () => {
         color: category.color,
         parentId: category.parentId,
         sortOrder: category.sortOrder,
+        type: (category.type === 'expense' || category.type === 'income') ? category.type : 'expense',
       });
       setShowModal(true);
     }
@@ -82,6 +85,7 @@ export const Category = () => {
   };
 
   const handleAddSubCategory = (parentId: string) => {
+    const parentCategory = categories.find((c: CategoryType) => c.id === parentId);
     setEditingCategory(null);
     setNewCategory({
       name: '',
@@ -89,6 +93,7 @@ export const Category = () => {
       color: colorOptions[0],
       parentId,
       sortOrder: 0,
+      type: (parentCategory?.type === 'expense' || parentCategory?.type === 'income') ? parentCategory.type : 'expense',
     });
     setShowModal(true);
   };
@@ -108,7 +113,7 @@ export const Category = () => {
             className="clay-button w-10 h-10 flex items-center justify-center bg-clay-primary text-white"
             onClick={() => {
               setEditingCategory(null);
-              setNewCategory({ name: '', icon: iconKeys[0], color: colorOptions[0], parentId: 'root', sortOrder: 0 });
+              setNewCategory({ name: '', icon: iconKeys[0], color: colorOptions[0], parentId: 'root', sortOrder: 0, type: 'expense' });
               setShowModal(true);
             }}
           >
@@ -238,6 +243,32 @@ export const Category = () => {
               onChange={(v) => setNewCategory({ ...newCategory, name: v })}
               placeholder="输入分类名称"
             />
+          </div>
+
+          <div>
+            <label className="text-text-tertiary text-xs block mb-2">收支类型</label>
+            <div className="flex gap-2">
+              <button
+                className={`flex-1 py-2 rounded-lg transition-all ${
+                  newCategory.type === 'expense' 
+                    ? 'bg-red-100 text-red-600 border-2 border-red-300' 
+                    : 'bg-gray-100 text-text-secondary'
+                }`}
+                onClick={() => setNewCategory({ ...newCategory, type: 'expense' })}
+              >
+                支出
+              </button>
+              <button
+                className={`flex-1 py-2 rounded-lg transition-all ${
+                  newCategory.type === 'income' 
+                    ? 'bg-green-100 text-green-600 border-2 border-green-300' 
+                    : 'bg-gray-100 text-text-secondary'
+                }`}
+                onClick={() => setNewCategory({ ...newCategory, type: 'income' })}
+              >
+                收入
+              </button>
+            </div>
           </div>
 
           <div>

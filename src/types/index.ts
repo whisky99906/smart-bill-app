@@ -6,6 +6,7 @@ export interface Transaction {
   categoryL1: string;
   categoryL2: string;
   merchant: string;
+  merchantShortName?: string;
   note: string;
   source: 'manual' | 'excel' | 'voice';
   createdAt: string;
@@ -24,6 +25,7 @@ export interface Category {
 export interface MerchantRule {
   id: string;
   merchantName: string;
+  merchantShortName?: string;
   categoryL1: string;
   categoryL2: string;
   useCount: number;

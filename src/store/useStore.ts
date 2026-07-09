@@ -27,8 +27,9 @@ interface MerchantRuleStore {
   addRule: (rule: Omit<MerchantRule, 'id' | 'useCount'>) => void;
   updateRule: (id: string, rule: Partial<MerchantRule>) => void;
   deleteRule: (id: string) => void;
-  matchMerchant: (merchantName: string) => { categoryL1: string; categoryL2: string } | null;
+  matchMerchant: (merchantName: string) => { categoryL1: string; categoryL2: string; merchantShortName?: string; ruleId?: string } | null;
   incrementUseCount: (ruleId: string) => void;
+  learnFromUser: (merchantName: string, categoryL1: string, categoryL2: string, merchantShortName?: string) => void;
 }
 
 interface BudgetSettings {
@@ -192,6 +193,15 @@ export const useMerchantRuleStore = create<MerchantRuleStore>((set, get) => ({
       localStorage.setItem('merchantRules', JSON.stringify(updated));
       return { rules: updated };
     });
+  },
+
+  learnFromUser: (merchantName, categoryL1, categoryL2, merchantShortName) => {
+    const existing = get().rules.find(r => merchantName.includes(r.merchantName));
+    if (existing) {
+      get().updateRule(existing.id, { categoryL1, categoryL2, merchantShortName });
+    } else {
+      get().addRule({ merchantName, categoryL1, categoryL2, merchantShortName });
+    }
   },
 }));
 

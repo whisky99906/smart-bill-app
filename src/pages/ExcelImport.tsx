@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import { ClayCard, ClayButton, ClayTab } from '@/components';
 import { useTransactionStore, useCategoryStore, useMerchantRuleStore } from '@/store/useStore';
 import { getIcon } from '@/utils/icons';
-import { suggestCategory } from '@/utils/aiService';
+import { suggestCategory } from '@/services/aiService';
 import { billCategoryMapping, normalizeMerchant } from '@/utils/category';
 import type { Category } from '@/types';
 import { ArrowLeft, Upload, CheckCircle, Sparkles, Wand2, Bot, Loader2 } from 'lucide-react';
