@@ -41,6 +41,103 @@ const DEFAULT_CONFIG: AiServiceConfig = {
   timeout: 15000,
 };
 
+const keywordRules: Array<{
+  keywords: string[];
+  type: 'expense' | 'income';
+  category: string;
+  subCategory: string;
+  reason: string;
+}> = [
+  { keywords: ['美团', '饿了么', '外卖', '订餐'], type: 'expense', category: 'food', subCategory: 'food-meals', reason: '外卖平台消费' },
+  { keywords: ['微信支付', '支付宝'], type: 'expense', category: 'food', subCategory: 'food-meals', reason: '移动支付消费' },
+  { keywords: ['食堂', '餐厅', '饭店', '餐馆', '小吃', '早餐', '午餐', '晚餐'], type: 'expense', category: 'food', subCategory: 'food-meals', reason: '餐饮消费' },
+  { keywords: ['奶茶', '咖啡', '星巴克', '瑞幸', '喜茶', '奈雪'], type: 'expense', category: 'food', subCategory: 'food-milktea', reason: '饮品消费' },
+  { keywords: ['零食', '超市', '便利店', '7-11', '全家'], type: 'expense', category: 'food', subCategory: 'food-snack', reason: '零食购物' },
+  { keywords: ['水果'], type: 'expense', category: 'food', subCategory: 'food-fruit', reason: '水果消费' },
+  { keywords: ['牛奶'], type: 'expense', category: 'food', subCategory: 'food-milk', reason: '牛奶消费' },
+  { keywords: ['聚餐'], type: 'expense', category: 'food', subCategory: 'food-dinner', reason: '聚餐消费' },
+  
+  { keywords: ['淘宝', '天猫', '京东', '拼多多', '唯品会', '抖音商城', '快手小店'], type: 'expense', category: 'shopping', subCategory: 'shopping-daily', reason: '电商购物' },
+  { keywords: ['服饰', '衣服', '鞋子', '包包', '鞋服'], type: 'expense', category: 'shopping', subCategory: 'shopping-clothes', reason: '服装购物' },
+  { keywords: ['手机', '电脑', '数码', '电器'], type: 'expense', category: 'shopping', subCategory: 'shopping-electronics', reason: '数码电器' },
+  { keywords: ['厨房'], type: 'expense', category: 'shopping', subCategory: 'shopping-kitchen', reason: '厨房用品' },
+  { keywords: ['物料'], type: 'expense', category: 'shopping', subCategory: 'shopping-material', reason: '物料采购' },
+  
+  { keywords: ['地铁', '公交', '滴滴', '打车', '出租车', '网约车'], type: 'expense', category: 'transport', subCategory: 'transport-taxi', reason: '交通出行' },
+  { keywords: ['飞机', '机票', '高铁', '火车票', '火车'], type: 'expense', category: 'transport', subCategory: 'transport-train', reason: '长途出行' },
+  { keywords: ['加油', '停车'], type: 'expense', category: 'transport', subCategory: 'transport-fuel', reason: '车辆费用' },
+  { keywords: ['共享单车', '青桔', '哈啰'], type: 'expense', category: 'transport', subCategory: 'transport-bike', reason: '共享单车' },
+  { keywords: ['大巴'], type: 'expense', category: 'transport', subCategory: 'transport-bus', reason: '大巴出行' },
+  
+  { keywords: ['房租', '租金'], type: 'expense', category: 'accommodation', subCategory: 'accommodation-rent', reason: '房租支出' },
+  { keywords: ['水电', '物业', '电费', '水费'], type: 'expense', category: 'accommodation', subCategory: 'accommodation-utility', reason: '物业水电' },
+  { keywords: ['维修'], type: 'expense', category: 'accommodation', subCategory: 'accommodation-repair', reason: '维修费用' },
+  
+  { keywords: ['快递', '顺丰', '中通', '圆通', '韵达'], type: 'expense', category: 'daily', subCategory: 'daily-express', reason: '快递费用' },
+  { keywords: ['理发', '美发'], type: 'expense', category: 'daily', subCategory: 'daily-haircut', reason: '理发消费' },
+  
+  { keywords: ['网课', '课程', '培训', '考试', '书籍', '资料', '教材'], type: 'expense', category: 'study', subCategory: 'study-online', reason: '学习支出' },
+  { keywords: ['比赛'], type: 'expense', category: 'study', subCategory: 'study-competition', reason: '比赛费用' },
+  
+  { keywords: ['红包', '转账', '送礼', '请客', '孝心', '亲密付'], type: 'expense', category: 'social', subCategory: 'social-redpacket', reason: '人情往来' },
+  
+  { keywords: ['电影', '游戏', '演唱会', 'KTV', '健身', '约会'], type: 'expense', category: 'entertainment', subCategory: 'entertainment-movie', reason: '娱乐消费' },
+  { keywords: ['休闲'], type: 'expense', category: 'entertainment', subCategory: 'entertainment-leisure', reason: '休闲娱乐' },
+  
+  { keywords: ['化妆品', '护肤品', '面膜', '洗面奶', '护理', '美妆'], type: 'expense', category: 'beauty', subCategory: 'beauty-cosmetics', reason: '美妆消费' },
+  
+  { keywords: ['旅游', '景点', '门票', '酒店', '团费', '伴手礼'], type: 'expense', category: 'travel', subCategory: 'travel-ticket', reason: '旅游支出' },
+  
+  { keywords: ['医院', '药品', '医疗', '就诊', '体检', '保健'], type: 'expense', category: 'medical', subCategory: 'medical-consult', reason: '医疗支出' },
+  
+  { keywords: ['会员', '视频', '音乐', '话费', '宽带'], type: 'expense', category: 'membership', subCategory: 'membership-video', reason: '会员/通讯费用' },
+  
+  { keywords: ['工资', '薪资', '薪酬'], type: 'income', category: 'salary', subCategory: 'salary-monthly', reason: '工资收入' },
+  { keywords: ['奖金', '绩效'], type: 'income', category: 'salary', subCategory: 'salary-bonus', reason: '奖金收入' },
+  { keywords: ['理财', '基金', '股票', '利息', '收益'], type: 'income', category: 'investment', subCategory: 'investment-fund', reason: '理财收益' },
+  { keywords: ['兼职', '副业'], type: 'income', category: 'part-time', subCategory: 'part-time-gig', reason: '兼职收入' },
+  { keywords: ['红包收入'], type: 'income', category: 'gift-income', subCategory: 'gift-income-redpacket', reason: '红包收入' },
+];
+
+const localClassify = (request: AiClassifyRequest): AiClassifyResult => {
+  const text = (request.merchant + ' ' + (request.description || '')).toLowerCase();
+  
+  for (const rule of keywordRules) {
+    for (const keyword of rule.keywords) {
+      if (text.includes(keyword.toLowerCase())) {
+        return {
+          type: rule.type,
+          category: rule.category,
+          subCategory: rule.subCategory,
+          merchantShortName: request.merchant.slice(0, 10),
+          confidence: 0.85,
+          reason: rule.reason,
+        };
+      }
+    }
+  }
+  
+  if (request.type === 'income') {
+    return {
+      type: 'income',
+      category: 'other-income',
+      subCategory: 'other-income',
+      merchantShortName: request.merchant.slice(0, 10),
+      confidence: 0.5,
+      reason: '未知收入来源',
+    };
+  }
+  
+  return {
+    type: 'expense',
+    category: 'other-expense',
+    subCategory: 'other-expense',
+    merchantShortName: request.merchant.slice(0, 10),
+    confidence: 0.5,
+    reason: '无法识别商户类型',
+  };
+};
+
 const classifyCache = new Map<string, AiClassifyResult>();
 let runtimeConfig: Partial<AiServiceConfig> = {};
 
@@ -106,6 +203,18 @@ export const suggestCategory = async (
   type: string = 'expense'
 ): Promise<{ categoryL1: string; categoryL2: string; confidence: number } | null> => {
   if (!isAiAvailable()) {
+    const result = localClassify({
+      merchant,
+      description: note,
+      type: type === 'skip' ? undefined : type as any,
+    });
+    if (result.confidence > 0) {
+      return {
+        categoryL1: result.category,
+        categoryL2: result.subCategory,
+        confidence: result.confidence,
+      };
+    }
     return null;
   }
 
@@ -283,14 +392,12 @@ export const batchClassify = async (
   const config = getConfig();
 
   if (!config.apiKey) {
-    return requests.map(req => ({
-      type: req.type || 'expense',
-      category: 'other-expense',
-      subCategory: 'other-expense',
-      merchantShortName: req.merchant.slice(0, 10),
-      confidence: 0,
-      reason: '未配置 AI API Key',
-    }));
+    return requests.map((req, index) => {
+      if (onProgress) {
+        onProgress({ processed: index + 1, total: requests.length, currentMerchant: req.merchant });
+      }
+      return localClassify(req);
+    });
   }
 
   const total = requests.length;
