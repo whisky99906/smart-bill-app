@@ -17,6 +17,7 @@ interface ParsedRow {
 
 interface ImportRow {
   original: ParsedRow;
+  originalMerchant?: string;
   date: string;
   amount: string;
   merchant: string;
@@ -556,7 +557,7 @@ export const ExcelImport = () => {
         }
       }
 
-      const normalizedMerchant = normalizeMerchant(merchant);
+      const simplifiedMerchant = normalizeMerchant(merchant);
       const formattedAmount = formatAmount(amount);
 
       // Bug6: 不计收支标记为skip; Bug10: 金额为0标记为skip
@@ -564,9 +565,10 @@ export const ExcelImport = () => {
 
       return {
         original: row,
+        originalMerchant: merchant,
         date: formatDate(String(date)),
         amount: formattedAmount,
-        merchant: normalizedMerchant,
+        merchant: simplifiedMerchant,
         type: transactionType === 'skip' ? 'skip' : transactionType,
         note,
         categoryL1,
@@ -752,7 +754,7 @@ export const ExcelImport = () => {
           source: 'excel',
         });
 
-        const matched = matchMerchant(row.merchant);
+        const matched = matchMerchant(row.originalMerchant || row.merchant);
         if (matched && (matched as any).ruleId) {
           newlyMatchedRuleIds.add((matched as any).ruleId);
         }

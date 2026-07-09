@@ -501,6 +501,21 @@ export const normalizeMerchant = (raw: string): string => {
     name = parts[0];
   }
   
+  const orgPrefixPatterns = [
+    /^(.*?(大学|学院|公司|集团|银行|医院|学校|研究院|研究所|中心|局|部|厅|院|厂|店|社|馆|楼|室|站|场))\s*/,
+  ];
+  
+  for (const pattern of orgPrefixPatterns) {
+    const match = name.match(pattern);
+    if (match && match[0].length < name.length) {
+      const remainder = name.substring(match[0].length).trim();
+      if (remainder.length > 0) {
+        name = remainder;
+        break;
+      }
+    }
+  }
+  
   return name.trim();
 };
 
