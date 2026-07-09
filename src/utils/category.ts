@@ -425,12 +425,18 @@ export const getSubCategories = (categories: Category[], parentId: string): Cate
   return categories.filter(c => c.parentId === parentId).sort((a, b) => a.sortOrder - b.sortOrder);
 };
 
+const CATEGORY_VERSION = 'v2';
+
 export const getAllCategories = (): Category[] => {
   const stored = localStorage.getItem('categories');
-  if (stored) {
+  const storedVersion = localStorage.getItem('categoryVersion');
+  
+  if (stored && storedVersion === CATEGORY_VERSION) {
     return JSON.parse(stored);
   }
+  
   localStorage.setItem('categories', JSON.stringify(defaultCategories));
+  localStorage.setItem('categoryVersion', CATEGORY_VERSION);
   return defaultCategories;
 };
 

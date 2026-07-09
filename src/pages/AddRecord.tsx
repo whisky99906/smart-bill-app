@@ -94,9 +94,8 @@ export const AddRecord = () => {
     }
   };
 
-  const allCategories = getMainCategories();
-  const mainCategories = allCategories.filter(c => c.type === type || !c.type);
-  const subCategories = categoryL1 ? getSubCategories(categoryL1).filter(c => c.type === type || !c.type) : [];
+  const mainCategories = getMainCategories(type);
+  const subCategories = categoryL1 ? getSubCategories(categoryL1) : [];
 
   return (
     <div className="min-h-screen bg-clay-bg pb-36">

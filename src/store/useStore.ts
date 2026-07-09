@@ -17,7 +17,7 @@ interface CategoryStore {
   addCategory: (category: Omit<Category, 'id'>) => void;
   updateCategory: (id: string, category: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
-  getMainCategories: () => Category[];
+  getMainCategories: (type?: string) => Category[];
   getSubCategories: (parentId: string) => Category[];
   getCategoryById: (id: string) => Category | undefined;
 }
@@ -134,8 +134,15 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
     });
   },
 
-  getMainCategories: () => {
-    return get().categories.filter(c => c.parentId === 'root').sort((a, b) => a.sortOrder - b.sortOrder);
+  getMainCategories: (type?: string) => {
+    const rootCategories = get().categories.filter(c => c.parentId === 'root').sort((a, b) => a.sortOrder - b.sortOrder);
+    if (type) {
+      const rootCategory = rootCategories.find(c => c.type === type);
+      if (rootCategory) {
+        return get().categories.filter(c => c.parentId === rootCategory.id).sort((a, b) => a.sortOrder - b.sortOrder);
+      }
+    }
+    return rootCategories;
   },
 
   getSubCategories: (parentId) => {
