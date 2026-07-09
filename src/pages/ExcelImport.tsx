@@ -41,23 +41,23 @@ const smartCategoryKeywords: Record<string, { l1: string; l2: string }[]> = {
   服装: [{ l1: 'shopping', l2: 'shopping-clothes' }],
   购物: [{ l1: 'shopping', l2: 'shopping-daily' }],
   数码: [{ l1: 'shopping', l2: 'shopping-electronics' }],
-  美妆: [{ l1: 'shopping', l2: 'shopping-beauty' }],
+  美妆: [{ l1: 'beauty', l2: 'beauty-skincare' }],
   公交: [{ l1: 'transport', l2: 'transport-bus' }],
   地铁: [{ l1: 'transport', l2: 'transport-subway' }],
   打车: [{ l1: 'transport', l2: 'transport-taxi' }],
   滴滴: [{ l1: 'transport', l2: 'transport-taxi' }],
   加油: [{ l1: 'transport', l2: 'transport-fuel' }],
-  电影: [{ l1: 'entertainment', l2: 'entertainment-movie' }],
-  游戏: [{ l1: 'entertainment', l2: 'entertainment-game' }],
-  旅行: [{ l1: 'entertainment', l2: 'entertainment-travel' }],
-  运动: [{ l1: 'entertainment', l2: 'entertainment-sport' }],
-  房租: [{ l1: 'living', l2: 'living-rent' }],
-  水电: [{ l1: 'living', l2: 'living-water' }],
-  网费: [{ l1: 'living', l2: 'living-internet' }],
+  电影: [{ l1: 'social', l2: 'social-entertainment' }],
+  游戏: [{ l1: 'social', l2: 'social-game' }],
+  旅行: [{ l1: 'travel', l2: 'travel-group' }],
+  运动: [{ l1: 'membership', l2: 'membership-fitness' }],
+  房租: [{ l1: 'accommodation', l2: 'accommodation-rent' }],
+  水电: [{ l1: 'accommodation', l2: 'accommodation-utility' }],
+  网费: [{ l1: 'accommodation', l2: 'accommodation-utility' }],
   工资: [{ l1: 'salary', l2: 'salary-monthly' }],
   奖金: [{ l1: 'salary', l2: 'salary-bonus' }],
   理财: [{ l1: 'investment', l2: 'investment-fund' }],
-  红包: [{ l1: 'gift-income', l2: 'gift-income-redpacket' }, { l1: 'other-expense', l2: 'other-expense-redpacket' }],
+  红包: [{ l1: 'gift-income', l2: 'gift-income-redpacket' }, { l1: 'social', l2: 'social-gift' }],
   医疗: [{ l1: 'medical', l2: 'medical-hospital' }, { l1: 'medical', l2: 'medical-drug' }],
   书籍: [{ l1: 'study', l2: 'study-book' }],
   课程: [{ l1: 'study', l2: 'study-course' }],
@@ -72,7 +72,7 @@ const smartCategoryKeywords: Record<string, { l1: string; l2: string }[]> = {
   拼多多: [{ l1: 'shopping', l2: 'shopping-daily' }],
   滴滴出行: [{ l1: 'transport', l2: 'transport-taxi' }],
   高德: [{ l1: 'transport', l2: 'transport-taxi' }],
-  携程: [{ l1: 'entertainment', l2: 'entertainment-travel' }],
+  携程: [{ l1: 'travel', l2: 'travel-group' }],
   美团外卖: [{ l1: 'food', l2: 'food-lunch' }, { l1: 'food', l2: 'food-dinner' }],
 };
 
@@ -229,41 +229,48 @@ const parseCSVLine = (line: string): string[] => {
 const parseAlipayBill = (jsonData: ParsedRow[]): ParsedRow[] => {
   const data: ParsedRow[] = [];
   let headerRow = -1;
+  const fieldKeys: Record<string, string> = {};
   
   for (let i = 0; i < jsonData.length; i++) {
     const row = jsonData[i];
-    const keys = Object.keys(row);
+    const rowStr = JSON.stringify(row);
     
-    if (keys.some(k => String(row[k]).includes('交易时间')) && keys.some(k => String(row[k]).includes('交易分类'))) {
+    // 找到真正的表头行（包含"交易时间"、"交易分类"等字段值的行）
+    if (rowStr.includes('交易时间') && (rowStr.includes('交易分类') || rowStr.includes('商品说明')) && rowStr.includes('金额')) {
       headerRow = i;
+      
+      // 用表头行的实际文字值来定位各列的 key
+      for (const key of Object.keys(row)) {
+        const value = String(row[key] || '');
+        if (value.includes('交易时间') || value.includes('日期')) fieldKeys.date = key;
+        else if (value.includes('收/支') || value.includes('收支')) fieldKeys.incomeExpense = key;
+        else if (value.includes('交易对方') || value.includes('对方') || value.includes('商家') || value.includes('商户')) fieldKeys.merchant = key;
+        else if (value.includes('商品说明') || value.includes('商品') || value.includes('备注') || value.includes('摘要')) fieldKeys.note = key;
+        else if (value.includes('金额') || value.includes('收/支')) fieldKeys.amount = key;
+        else if (value.includes('交易分类') || value.includes('分类')) fieldKeys.category = key;
+      }
       continue;
     }
     
     if (headerRow >= 0 && i > headerRow) {
-      let dateKey = '';
-      let amountKey = '';
-      let typeKey = '';
-      let merchantKey = '';
-      let noteKey = '';
-      let categoryKey = '';
+      // 跳过汇总行等非数据行
+      const dateValue = row[fieldKeys.date];
+      const dateStr = typeof dateValue === 'number'
+        ? formatExcelDate(dateValue)
+        : String(dateValue || '');
+      if (!dateStr || !dateStr.match(/\d{4}/)) continue;
       
-      for (const key of keys) {
-        if (key.includes('时间') || key.includes('日期')) dateKey = key;
-        if (key.includes('金额') || key.includes('收支')) amountKey = key;
-        if (key.includes('收/支') || key.includes('收支')) typeKey = key;
-        if (key.includes('对方') || key.includes('商家') || key.includes('商户')) merchantKey = key;
-        if (key.includes('备注') || key.includes('商品') || key.includes('摘要')) noteKey = key;
-        if (key.includes('分类')) categoryKey = key;
-      }
+      const amountValue = row[fieldKeys.amount];
+      if (!amountValue) continue;
       
       data.push({
-        date: String(row[dateKey] || ''),
-        type: String(row[typeKey] || ''),
-        merchant: String(row[merchantKey] || ''),
-        note: String(row[noteKey] || ''),
-        amount: row[amountKey],
-        category: String(row[categoryKey] || ''),
-        incomeExpense: String(row[typeKey] || ''),
+        date: dateStr,
+        type: String(row[fieldKeys.incomeExpense] || ''),
+        merchant: String(row[fieldKeys.merchant] || ''),
+        note: String(row[fieldKeys.note] || ''),
+        amount: amountValue,
+        category: String(row[fieldKeys.category] || ''),
+        incomeExpense: String(row[fieldKeys.incomeExpense] || ''),
       });
     }
   }
@@ -504,7 +511,7 @@ export const ExcelImport = () => {
 
       if (!categoryL1) {
         categoryL1 = transactionType === 'income' ? 'other-income' : 'other-expense';
-        categoryL2 = transactionType === 'income' ? 'other-income-unknown' : 'other-expense-gift';
+        categoryL2 = transactionType === 'income' ? 'other-income' : 'other-expense';
       }
 
       const normalizedMerchant = normalizeMerchant(merchant);
@@ -776,7 +783,7 @@ export const ExcelImport = () => {
               <ClayButton 
                 className="flex-1" 
                 onClick={() => handleNextStep()}
-                disabled={!fieldMapping.date || !fieldMapping.amount || !fieldMapping.merchant}
+                disabled={!Object.values(fieldMapping).includes('date') || !Object.values(fieldMapping).includes('amount') || !Object.values(fieldMapping).includes('merchant')}
               >
                 下一步
               </ClayButton>
