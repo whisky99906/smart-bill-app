@@ -526,7 +526,7 @@ export const normalizeMerchant = (raw: string): string => {
       if (index >= 0) {
         const remainder = name.substring(index + suffix.length).trim();
         if (remainder.length > 0) {
-          const trimmedRemainder = remainder.replace(/^[\s一-十\d]+/, '').trim();
+          const trimmedRemainder = remainder.replace(/^[\s一二三四五六七八九十百千\d]+/, '').trim();
           if (trimmedRemainder.length > 0) {
             const isActionWord = campusActionWords.has(trimmedRemainder);
             const isShortActionWord = trimmedRemainder.length <= 3 && 
@@ -548,7 +548,8 @@ export const normalizeMerchant = (raw: string): string => {
         const index = name.indexOf(prefix);
         if (index >= 0) {
           const remainder = name.substring(index + prefix.length).trim();
-          if (remainder.length > 0) {
+          // 剥完地点前缀后至少剩2个字以上才有意义，避免剥成"店""局"这种单字
+          if (remainder.length >= 2) {
             name = remainder;
             changed = true;
             break;
